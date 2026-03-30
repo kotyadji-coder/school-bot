@@ -306,6 +306,21 @@ def _generate_html(title: str, image_url: str | None, explanation_text: str, met
                 font-size: 1.6em;
             }}
 
+            .image-container {{
+                text-align: center;
+                margin: 0 0 20px;
+            }}
+
+            .image-container img {{
+                max-width: 55%;
+                max-height: 260px;
+                width: auto;
+                height: auto;
+                display: block;
+                margin: 0 auto;
+                border-radius: 12px;
+            }}
+
             .explanation-text {{
                 font-size: 1em;
             }}
