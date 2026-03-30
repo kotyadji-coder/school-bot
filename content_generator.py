@@ -7,7 +7,7 @@ CONTENT_DIR.mkdir(exist_ok=True)
 
 
 def save_explanation(
-    image_bytes: bytes,
+    image_bytes: bytes | None,
     explanation_text: str,
     server_url: str = "http://localhost:8000",
     tasks: str = "",
@@ -20,10 +20,14 @@ def save_explanation(
     """
     content_id = str(uuid.uuid4())[:8]
 
-    # Сохраняем картинку
-    image_path = CONTENT_DIR / f"{content_id}.png"
-    with open(image_path, "wb") as f:
-        f.write(image_bytes)
+    # Сохраняем картинку если есть
+    if image_bytes is not None:
+        image_path = CONTENT_DIR / f"{content_id}.png"
+        with open(image_path, "wb") as f:
+            f.write(image_bytes)
+        image_url = f"{server_url}/content/{content_id}.png"
+    else:
+        image_url = None
 
     # Извлекаем заголовок из первой непустой строки
     lines = [l.strip() for l in explanation_text.splitlines() if l.strip()]
@@ -31,7 +35,6 @@ def save_explanation(
     body_text = "\n".join(lines[1:]) if len(lines) > 1 else explanation_text
 
     # Генерируем HTML
-    image_url = f"{server_url}/content/{content_id}.png"
     content_url = f"{server_url}/lesson/{content_id}"
     html_content = _generate_html(title, image_url, body_text, tasks, methodologist_notes, content_url)
 
@@ -43,7 +46,7 @@ def save_explanation(
     return content_id
 
 
-def _generate_html(title: str, image_url: str, explanation_text: str, tasks: str = "", methodologist_notes: str = "", content_url: str = "") -> str:
+def _generate_html(title: str, image_url: str | None, explanation_text: str, tasks: str = "", methodologist_notes: str = "", content_url: str = "") -> str:
     """Генерирует HTML-страницу с объяснением."""
     paragraphs = "".join(
         f"<p>{p.strip()}</p>" for p in explanation_text.split("\n") if p.strip()
@@ -83,7 +86,7 @@ def _generate_html(title: str, image_url: str, explanation_text: str, tasks: str
     <meta property="og:type" content="article" />
     <meta property="og:title" content="{title}" />
     <meta property="og:description" content="{description}" />
-    <meta property="og:image" content="{image_url}" />
+    <meta property="og:image" content="{image_url or ''}" />
     <meta property="og:url" content="{content_url}" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -294,9 +297,7 @@ def _generate_html(title: str, image_url: str, explanation_text: str, tasks: str
             <h1 class="lesson-title">{title}</h1>
             <div class="divider"></div>
 
-            <div class="image-container">
-                <img src="{image_url}" alt="{title}" loading="lazy">
-            </div>
+            {f'<div class="image-container"><img src="{image_url}" alt="{title}" loading="lazy"></div>' if image_url else ''}
 
             <div class="explanation-text">
                 {paragraphs}

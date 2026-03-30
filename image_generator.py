@@ -12,10 +12,16 @@ def generate_image(image_prompt: str) -> bytes:
     """
     credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
     if credentials_path:
+        from google.oauth2 import service_account
+        credentials = service_account.Credentials.from_service_account_file(
+            credentials_path,
+            scopes=["https://www.googleapis.com/auth/cloud-platform"],
+        )
         client = genai.Client(
             vertexai=True,
             project=PROJECT_ID,
             location="us-central1",
+            credentials=credentials,
         )
     else:
         client = genai.Client(
@@ -35,8 +41,17 @@ def generate_image(image_prompt: str) -> bytes:
         )
     )
 
-    for part in response.candidates[0].content.parts:
+    candidates = response.candidates
+    if not candidates:
+        raise ValueError("No candidates in image response")
+
+    candidate = candidates[0]
+    if candidate.content is None or candidate.content.parts is None:
+        finish_reason = getattr(candidate, "finish_reason", "unknown")
+        raise ValueError(f"Image response has no content (finish_reason={finish_reason})")
+
+    for part in candidate.content.parts:
         if part.inline_data is not None:
             return part.inline_data.data
 
-    raise ValueError("No image data in response")
+    raise ValueError("No image data in response parts")

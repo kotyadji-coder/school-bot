@@ -89,7 +89,7 @@ def _generate_and_send(user_id: str, question: str, channel_id: str, callback_ur
             db_logger.log("INFO", "IMAGE_DONE", "Изображение сгенерировано", user_id=user_id, channel_id=channel_id)
         except Exception as img_err:
             db_logger.log("ERROR", "IMAGE_ERROR", f"Ошибка генерации изображения: {img_err}", user_id=user_id, channel_id=channel_id)
-            raise
+            image_bytes = None
 
         # 3. Сохраняем HTML-страницу
         content_id = save_explanation(
