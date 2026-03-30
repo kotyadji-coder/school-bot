@@ -104,7 +104,7 @@ def _generate_and_send(user_id: str, question: str, channel_id: str, callback_ur
         db_logger.log("INFO", "EXPLANATION_DONE", f"Объяснение сохранено: {content_id}", user_id=user_id, channel_id=channel_id)
 
         # 4. Отправляем через SmartBot
-        lesson_url = f"{SERVER_URL}/lesson/{content_id}"
+        lesson_url = f"{SERVER_URL}/e/{content_id}"
 
         try:
             send_message(peer_id=user_id, status="success", channel_id=channel_id, lesson_url=lesson_url)
@@ -160,7 +160,7 @@ async def generate(request: Request):
     return {"status": "ok"}
 
 
-@app.get("/lesson/{content_id}", response_class=HTMLResponse)
+@app.get("/e/{content_id}", response_class=HTMLResponse)
 async def get_lesson(content_id: str):
     html_path = CONTENT_DIR / f"{content_id}.html"
     if not html_path.exists():

@@ -35,7 +35,7 @@ def save_explanation(
     body_text = "\n".join(lines[1:]) if len(lines) > 1 else explanation_text
 
     # Генерируем HTML
-    content_url = f"{server_url}/lesson/{content_id}"
+    content_url = f"{server_url}/e/{content_id}"
     html_content = _generate_html(title, image_url, body_text, tasks, methodologist_notes, content_url)
 
     # Сохраняем HTML
