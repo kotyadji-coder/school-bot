@@ -57,8 +57,14 @@ def save_explanation(
 
 def _generate_html(title: str, image_url: str | None, explanation_text: str, methodologist_notes: str = "", content_url: str = "") -> str:
     """Генерирует HTML-страницу с объяснением."""
+    def _render_line(line: str) -> str:
+        line = line.strip()
+        if "МИССИЯ" in line:
+            return f'<h2 class="mission-header">{line}</h2>'
+        return f"<p>{line}</p>"
+
     paragraphs = "".join(
-        f"<p>{p.strip()}</p>" for p in explanation_text.split("\n") if p.strip()
+        _render_line(p) for p in explanation_text.split("\n") if p.strip()
     )
     description = re.sub(r'<[^>]+>', '', explanation_text.strip())[:150].replace('"', '&quot;')
     if len(explanation_text.strip()) > 150:
@@ -202,6 +208,16 @@ def _generate_html(title: str, image_url: str | None, explanation_text: str, met
 
         .methodologist-notes h2 {{
             color: #059669;
+        }}
+
+        .mission-header {{
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 2px dashed #ffd700;
+            font-family: 'Nunito', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #ff6b6b;
         }}
 
         .action-bar {{
