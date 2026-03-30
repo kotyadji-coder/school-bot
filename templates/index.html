@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- TODO: Replace with your bot's name and description -->
+    <title>УчиМульт — учёба через любимых героев</title>
+    <meta name="description" content="Объясняем школьные темы через любимых персонажей мультфильмов. Математика, история, биология — понятно и весело!">
+    <meta property="og:title" content="УчиМульт — учёба через любимых героев">
+    <meta property="og:description" content="Объясняем школьные темы через любимых персонажей мультфильмов.">
+    <!-- TODO: Add og:image with your actual image URL -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #5B6FE8;
+            --primary-light: #EEF2FF;
+            --accent: #F59E0B;
+            --accent-light: #FFFBEB;
+            --green: #10B981;
+            --green-light: #ECFDF5;
+            --text: #2D3561;
+            --text-muted: #6B7280;
+            --bg: #F8FAFF;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'Nunito Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* HEADER */
+        header {
+            background: var(--white);
+            padding: 16px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 12px rgba(91, 111, 232, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Nunito', sans-serif;
+            font-size: 1.4em;
+            font-weight: 900;
+            color: var(--primary);
+        }
+
+        .header-cta {
+            background: var(--primary);
+            color: white;
+            padding: 10px 24px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            font-size: 0.95em;
+            transition: opacity 0.2s;
+        }
+
+        .header-cta:hover { opacity: 0.9; }
+
+        /* HERO */
+        .hero {
+            padding: 80px 24px 60px;
+            text-align: center;
+            max-width: 680px;
+            margin: 0 auto;
+        }
+
+        .hero-tag {
+            display: inline-block;
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 6px 18px;
+            border-radius: 50px;
+            font-size: 0.9em;
+            font-weight: 700;
+            margin-bottom: 24px;
+        }
+
+        .hero h1 {
+            font-family: 'Nunito', sans-serif;
+            font-size: 2.8em;
+            font-weight: 900;
+            color: var(--text);
+            line-height: 1.2;
+            margin-bottom: 20px;
+        }
+
+        .hero h1 span { color: var(--primary); }
+
+        .hero p {
+            font-size: 1.15em;
+            color: var(--text-muted);
+            margin-bottom: 36px;
+            line-height: 1.7;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            padding: 16px 36px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: 1.05em;
+            transition: transform 0.2s, opacity 0.2s;
+            display: inline-block;
+        }
+
+        .btn-primary:hover { transform: translateY(-2px); opacity: 0.95; }
+
+        .btn-secondary {
+            background: var(--white);
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            padding: 14px 32px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: 1.05em;
+            transition: background 0.2s;
+            display: inline-block;
+        }
+
+        .btn-secondary:hover { background: var(--primary-light); }
+
+        /* HOW IT WORKS */
+        .section {
+            padding: 60px 24px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-family: 'Nunito', sans-serif;
+            font-size: 2em;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 48px;
+            font-size: 1.05em;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+        }
+
+        .step {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 32px 28px;
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(91, 111, 232, 0.07);
+        }
+
+        .step-num {
+            font-family: 'Nunito', sans-serif;
+            font-size: 2.5em;
+            font-weight: 900;
+            color: var(--primary);
+            opacity: 0.2;
+            line-height: 1;
+            margin-bottom: 12px;
+        }
+
+        .step h3 {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        .step p { color: var(--text-muted); font-size: 0.95em; }
+
+        /* SUBJECTS */
+        .subjects-bg { background: var(--primary-light); }
+
+        .subjects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+        }
+
+        .subject-card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 24px 16px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(91, 111, 232, 0.06);
+        }
+
+        .subject-icon { font-size: 2.5em; margin-bottom: 10px; }
+
+        .subject-card h3 {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: 0.95em;
+        }
+
+        /* FEATURES */
+        .features-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .feature {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+            background: var(--white);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(91, 111, 232, 0.06);
+        }
+
+        .feature-icon {
+            font-size: 2em;
+            flex-shrink: 0;
+        }
+
+        .feature h3 {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+
+        .feature p { color: var(--text-muted); font-size: 0.95em; }
+
+        /* CTA BOTTOM */
+        .cta-section {
+            background: var(--primary);
+            color: white;
+            padding: 80px 24px;
+            text-align: center;
+        }
+
+        .cta-section h2 {
+            font-family: 'Nunito', sans-serif;
+            font-size: 2.2em;
+            font-weight: 900;
+            margin-bottom: 16px;
+        }
+
+        .cta-section p {
+            font-size: 1.1em;
+            opacity: 0.85;
+            margin-bottom: 36px;
+        }
+
+        .btn-white {
+            background: white;
+            color: var(--primary);
+            padding: 16px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 900;
+            font-size: 1.1em;
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+
+        .btn-white:hover { transform: translateY(-2px); }
+
+        /* FOOTER */
+        footer {
+            background: var(--text);
+            color: rgba(255,255,255,0.6);
+            padding: 32px 24px;
+            text-align: center;
+            font-size: 0.9em;
+        }
+
+        footer a { color: rgba(255,255,255,0.6); }
+
+        @media (max-width: 600px) {
+            .hero h1 { font-size: 2em; }
+            .section-title { font-size: 1.6em; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <!-- TODO: Replace "УчиМульт" with your bot's actual name -->
+    <div class="logo">🎓 УчиМульт</div>
+    <!-- TODO: Replace href with your Telegram bot link -->
+    <a href="https://t.me/YOUR_BOT_USERNAME" class="header-cta">Попробовать бесплатно</a>
+</header>
+
+<section class="hero">
+    <div class="hero-tag">✨ Учёба стала интересной</div>
+    <h1>Школьные темы через <span>любимых героев</span></h1>
+    <p>
+        Объясняем математику, историю, биологию и другие предметы через персонажей Гравити Фолс, Губки Боба, Наруто — и любых других мультфильмов, которые любит твой ребёнок.
+    </p>
+    <div class="hero-buttons">
+        <!-- TODO: Replace with your actual bot links -->
+        <a href="https://t.me/YOUR_BOT_USERNAME" class="btn-primary">🤖 Telegram</a>
+        <a href="https://vk.com/YOUR_VK_BOT" class="btn-secondary">ВКонтакте</a>
+    </div>
+</section>
+
+<section class="section">
+    <h2 class="section-title">Как это работает</h2>
+    <p class="section-subtitle">Три шага до понятного объяснения</p>
+    <div class="steps">
+        <div class="step">
+            <div class="step-num">1</div>
+            <h3>Расскажи о ребёнке</h3>
+            <p>Напиши класс, тему и любимый мультфильм. Можно просто написать в свободной форме.</p>
+        </div>
+        <div class="step">
+            <div class="step-num">2</div>
+            <h3>ИИ создаёт урок</h3>
+            <p>Мы генерируем объяснение, где любимый персонаж использует тему из учебника в реальной ситуации.</p>
+        </div>
+        <div class="step">
+            <div class="step-num">3</div>
+            <h3>Практикуйся</h3>
+            <p>Получи задания в стиле мультфильма и интересный факт — чтобы закрепить знания с удовольствием.</p>
+        </div>
+    </div>
+</section>
+
+<section class="section subjects-bg">
+    <div style="max-width: 900px; margin: 0 auto; padding: 60px 24px;">
+        <h2 class="section-title">Любой школьный предмет</h2>
+        <p class="section-subtitle">Объясняем всё — от алфавита до тригонометрии</p>
+        <div class="subjects-grid">
+            <div class="subject-card">
+                <div class="subject-icon">🔢</div>
+                <h3>Математика</h3>
+            </div>
+            <div class="subject-card">
+                <div class="subject-icon">🧬</div>
+                <h3>Биология</h3>
+            </div>
+            <div class="subject-card">
+                <div class="subject-icon">⚗️</div>
+                <h3>Химия</h3>
+            </div>
+            <div class="subject-card">
+                <div class="subject-icon">🏛️</div>
+                <h3>История</h3>
+            </div>
+            <div class="subject-card">
+                <div class="subject-icon">🌍</div>
+                <h3>География</h3>
+            </div>
+            <div class="subject-card">
+                <div class="subject-icon">📐</div>
+                <h3>Физика</h3>
+            </div>
+            <div class="subject-card">
+                <div class="subject-icon">📝</div>
+                <h3>Русский язык</h3>
+            </div>
+            <div class="subject-card">
+                <div class="subject-icon">🌐</div>
+                <h3>Английский</h3>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <h2 class="section-title">Что вы получаете</h2>
+    <p class="section-subtitle">Всё необходимое для увлекательного обучения</p>
+    <div class="features-list">
+        <div class="feature">
+            <div class="feature-icon">🎭</div>
+            <div>
+                <h3>Любой персонаж</h3>
+                <p>Гравити Фолс, Наруто, Губка Боб, Человек-Паук — любой любимый герой.</p>
+            </div>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">🎨</div>
+            <div>
+                <h3>Красивая иллюстрация</h3>
+                <p>Персонаж в учебной ситуации — весёлая картинка к каждому уроку.</p>
+            </div>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">✏️</div>
+            <div>
+                <h3>Практические задания</h3>
+                <p>Задачи в сеттинге мультфильма — решать интересно, а не скучно.</p>
+            </div>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">🌟</div>
+            <div>
+                <h3>Интересные факты</h3>
+                <p>Неожиданный факт по теме, который захочется рассказать всем.</p>
+            </div>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">📱</div>
+            <div>
+                <h3>Своя страница урока</h3>
+                <p>Красивая ссылка с уроком — можно сохранить и перечитать позже.</p>
+            </div>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">⚡</div>
+            <div>
+                <h3>За 2 минуты</h3>
+                <p>Напишите запрос — получите готовый урок быстро.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="cta-section">
+    <!-- TODO: Replace with your bot's name and link -->
+    <h2>Попробуй прямо сейчас</h2>
+    <p>Напиши тему и любимый мультфильм — мы сделаем урок, который запомнится</p>
+    <a href="https://t.me/YOUR_BOT_USERNAME" class="btn-white">🤖 Открыть бот в Telegram</a>
+</section>
+
+<footer>
+    <!-- TODO: Replace with your actual contact/social links -->
+    <p>© 2026 УчиМульт · <a href="https://t.me/YOUR_BOT_USERNAME">Telegram</a></p>
+</footer>
+
+</body>
+</html>
