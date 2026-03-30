@@ -231,6 +231,7 @@ def _generate_html(title: str, image_url: str | None, explanation_text: str, met
 
         .mission-header {{
             margin-top: 2rem;
+            margin-bottom: 2em;
             padding-top: 1.5rem;
             border-top: 2px dashed #ffd700;
             font-family: 'Nunito', sans-serif;
@@ -313,7 +314,7 @@ def _generate_html(title: str, image_url: str | None, explanation_text: str, met
 
             .image-container img {{
                 max-width: 55%;
-                max-height: 260px;
+                max-height: 220px;
                 width: auto;
                 height: auto;
                 display: block;
