@@ -1,4 +1,4 @@
-import os
+import re
 import uuid
 from pathlib import Path
 
@@ -6,11 +6,16 @@ CONTENT_DIR = Path(__file__).parent / "content"
 CONTENT_DIR.mkdir(exist_ok=True)
 
 
+def _md_to_html(text: str) -> str:
+    text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
+    text = re.sub(r'\*(.+?)\*', r'<em>\1</em>', text)
+    return text
+
+
 def save_explanation(
     image_bytes: bytes | None,
     explanation_text: str,
     server_url: str = "http://localhost:8000",
-    tasks: str = "",
     methodologist_notes: str = "",
 ) -> str:
     """
@@ -34,9 +39,13 @@ def save_explanation(
     title = lines[0] if lines else "Объяснение"
     body_text = "\n".join(lines[1:]) if len(lines) > 1 else explanation_text
 
+    # Конвертируем markdown в HTML
+    body_text = _md_to_html(body_text)
+    methodologist_notes = _md_to_html(methodologist_notes)
+
     # Генерируем HTML
     content_url = f"{server_url}/e/{content_id}"
-    html_content = _generate_html(title, image_url, body_text, tasks, methodologist_notes, content_url)
+    html_content = _generate_html(title, image_url, body_text, methodologist_notes, content_url)
 
     # Сохраняем HTML
     html_path = CONTENT_DIR / f"{content_id}.html"
@@ -46,25 +55,14 @@ def save_explanation(
     return content_id
 
 
-def _generate_html(title: str, image_url: str | None, explanation_text: str, tasks: str = "", methodologist_notes: str = "", content_url: str = "") -> str:
+def _generate_html(title: str, image_url: str | None, explanation_text: str, methodologist_notes: str = "", content_url: str = "") -> str:
     """Генерирует HTML-страницу с объяснением."""
     paragraphs = "".join(
         f"<p>{p.strip()}</p>" for p in explanation_text.split("\n") if p.strip()
     )
-    description = explanation_text.strip()[:150].replace('"', '&quot;')
+    description = re.sub(r'<[^>]+>', '', explanation_text.strip())[:150].replace('"', '&quot;')
     if len(explanation_text.strip()) > 150:
         description += "…"
-
-    tasks_html = ""
-    if tasks:
-        tasks_paragraphs = "".join(
-            f"<p>{p.strip()}</p>" for p in tasks.split("\n") if p.strip()
-        )
-        tasks_html = f"""
-            <div class="extra-section tasks">
-                <h2>✏️ Задания</h2>
-                {tasks_paragraphs}
-            </div>"""
 
     notes_html = ""
     if methodologist_notes:
@@ -302,7 +300,6 @@ def _generate_html(title: str, image_url: str | None, explanation_text: str, tas
             <div class="explanation-text">
                 {paragraphs}
             </div>
-            {tasks_html}
             {notes_html}
 
             <div class="action-bar" id="action-bar">

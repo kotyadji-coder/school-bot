@@ -98,7 +98,6 @@ def _generate_and_send(user_id: str, question: str, channel_id: str, callback_ur
             image_bytes=image_bytes,
             explanation_text=parsed["explanation"],
             server_url=SERVER_URL,
-            tasks=parsed["tasks"],
             methodologist_notes=parsed["methodologist_notes"],
         )
         db_logger.log("INFO", "EXPLANATION_DONE", f"Объяснение сохранено: {content_id}", user_id=user_id, channel_id=channel_id)

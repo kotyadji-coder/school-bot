@@ -49,32 +49,12 @@ def generate_explanation(question: str) -> tuple[str, str]:
 
 def parse_response(tutor_output: str, methodologist_output: str) -> dict:
     """
-    Разбивает финальный ответ тьютора-геймера на секции.
-    Третья секция — рекомендации методиста — берётся напрямую из шага 1.
-
-    Возвращает:
-      explanation  — объяснение через вселенную + задания (вывод тьютора целиком)
-      tasks        — только блок заданий из вывода тьютора
-      methodologist_notes — теория из шага 1 (для родителя/педагога)
+    Возвращает полный вывод тьютора-геймера как explanation,
+    и вывод методиста как methodologist_notes.
     """
-    sections = {"explanation": "", "tasks": ""}
-    markers = {
-        "---ОБЪЯСНЕНИЕ---": "explanation",
-        "---ЗАДАНИЯ---": "tasks",
-    }
-
-    current_key = None
-    for line in tutor_output.splitlines():
-        stripped = line.strip()
-        if stripped in markers:
-            current_key = markers[stripped]
-        elif current_key is not None:
-            sections[current_key] += line + "\n"
-
     return {
-        "explanation": sections["explanation"].strip().replace("**", ""),
-        "tasks": sections["tasks"].strip().replace("**", ""),
-        "methodologist_notes": methodologist_output.strip().replace("**", ""),
+        "explanation": tutor_output.strip(),
+        "methodologist_notes": methodologist_output.strip(),
     }
 
 
