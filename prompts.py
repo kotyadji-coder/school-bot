@@ -151,26 +151,21 @@ ____________________
 
 # ─── Step 3: Image prompt ─────────────────────────────────────────────────────
 # Input: final lesson text from Step 2
-# Output: one-line English image generation prompt, no characters or brand names
+# Output: detailed English image generation prompt describing one scene
 
-GENERATE_IMAGE_PROMPT_PROMPT = """ROLE:
-You generate children's book illustration prompts matching the exact visual style of fictional universes (anime, Disney, Pixar, Soviet cartoons, etc.), featuring iconic objects without characters or brand names.
+GENERATE_IMAGE_PROMPT_PROMPT = """You are an illustrator for children's educational books.
 
-TASK: From the lesson text below, identify the universe, its visual style, and select one iconic object from that universe. No characters, no text, no logos.
+Based on this story, create an image prompt describing ONE SCENE from the story.
 
 RULES:
-- Match the art style of the universe (anime style, 3D Pixar style, classic Disney style, etc.)
-- One object only, no characters or animals
-- Simple, clear for children 5-8 years
-- One continuous line, no line breaks
+- Match the art style of the universe (anime style for anime heroes, Soviet cartoon style for Russian characters, Disney/Pixar 3D style, etc.)
+- Describe a SCENE with environment, objects, accessories from that universe
+- NO characters, NO people, NO animals, NO faces
+- Include magical/educational elements (glowing numbers, floating letters, etc.)
+- Bright colors, warm atmosphere, children's book style
 
-OUTPUT FORMAT:
-"Children's illustration in [EXACT ART STYLE of universe], soft colors, warm atmosphere. A [object description]. No people, no animals, no characters. Soft background."
+OUTPUT (one paragraph, English only):
+"Children's book illustration in [EXACT STYLE] style: [detailed scene description with location, objects, atmosphere, educational elements]. Bright colors, warm lighting. No characters, no people, no animals."
 
-EXAMPLES:
-Children's illustration in Japanese anime style, soft colors, warm atmosphere. A glowing magical compact mirror with star decorations. No people, no animals, no characters. Soft background.
-
-Children's illustration in Soviet cartoon style, soft colors, warm atmosphere. A wooden bucket with honey dripping from the edge. No people, no animals, no characters. Soft background.
-
-LESSON TEXT:
+STORY:
 {story}"""
