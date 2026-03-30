@@ -27,7 +27,7 @@ def send_message(peer_id: str, status: str = "success", channel_id: str | None =
     resolved_channel_id = channel_id or DEFAULT_CHANNEL_ID
     config = CHANNEL_CONFIGS.get(resolved_channel_id, CHANNEL_CONFIGS[DEFAULT_CHANNEL_ID])
     block_id = config["block_error"] if status == "error" else config["block_success"]
-    logger.info("SmartBot routing: channel_id=%s status=%s block_id=%s", resolved_channel_id, status, block_id)
+    logger.warning("SmartBot routing: channel_id=%s status=%s block_id=%s", resolved_channel_id, status, block_id)
     data = {"lesson_url": lesson_url} if lesson_url else {}
     payload = {
         "access_token": ACCESS_TOKEN,
@@ -37,7 +37,7 @@ def send_message(peer_id: str, status: str = "success", channel_id: str | None =
         "peer_id": peer_id,
         "data": data,
     }
-    logger.info("SmartBot payload: %s", json.dumps(payload, ensure_ascii=False))
+    logger.warning("SmartBot payload: %s", json.dumps(payload, ensure_ascii=False))
     response = httpx.post(SMARTBOT_URL, json=payload, timeout=30)
-    logger.info("SmartBot response: status=%s body=%s", response.status_code, response.text)
+    logger.warning("SmartBot response: status=%s body=%s", response.status_code, response.text)
     response.raise_for_status()
