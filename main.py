@@ -103,12 +103,9 @@ def _generate_and_send(user_id: str, question: str, channel_id: str, callback_ur
 
         # 4. Отправляем через SmartBot
         lesson_url = f"{SERVER_URL}/lesson/{content_id}"
-        final_text = (
-            f"🎓 Твой урок готов!\n{lesson_url}"
-        )
 
         try:
-            send_message(peer_id=user_id, text=final_text, status="success", channel_id=channel_id)
+            send_message(peer_id=user_id, status="success", channel_id=channel_id, lesson_url=lesson_url)
             db_logger.log("INFO", "CALLBACK_SENT", f"Ответ отправлен в SmartBot, content_id={content_id}", user_id=user_id, channel_id=channel_id)
         except Exception as cb_err:
             db_logger.log("ERROR", "CALLBACK_ERROR", f"Ошибка отправки в SmartBot: {cb_err}", user_id=user_id, channel_id=channel_id)
@@ -118,7 +115,7 @@ def _generate_and_send(user_id: str, question: str, channel_id: str, callback_ur
         error_message = str(e)
         db_logger.log("ERROR", "ERROR", f"Необработанная ошибка: {error_message}", user_id=user_id, channel_id=channel_id)
         logger.exception("Ошибка при генерации объяснения для user_id=%s", user_id)
-        send_message(peer_id=user_id, text="Произошла ошибка при создании урока. Попробуйте ещё раз.", status="error", channel_id=channel_id)
+        send_message(peer_id=user_id, status="error", channel_id=channel_id)
         _notify_admin(error_message=error_message, user_id=user_id)
         if callback_url:
             try:
