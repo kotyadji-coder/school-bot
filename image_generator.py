@@ -1,9 +1,11 @@
+import logging
 import os
 
 from google import genai
 from google.genai import types
 
 PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
+logger = logging.getLogger("school-bot")
 
 
 def generate_image(image_prompt: str) -> bytes:
@@ -43,11 +45,20 @@ def generate_image(image_prompt: str) -> bytes:
 
     candidates = response.candidates
     if not candidates:
+        logger.warning("IMAGE_RESPONSE: no candidates. prompt_feedback=%s", getattr(response, "prompt_feedback", None))
         raise ValueError("No candidates in image response")
 
     candidate = candidates[0]
+    finish_reason = getattr(candidate, "finish_reason", "unknown")
+    safety_ratings = getattr(candidate, "safety_ratings", None)
+    logger.warning(
+        "IMAGE_RESPONSE: finish_reason=%s safety_ratings=%s has_content=%s",
+        finish_reason,
+        safety_ratings,
+        candidate.content is not None,
+    )
+
     if candidate.content is None or candidate.content.parts is None:
-        finish_reason = getattr(candidate, "finish_reason", "unknown")
         raise ValueError(f"Image response has no content (finish_reason={finish_reason})")
 
     for part in candidate.content.parts:

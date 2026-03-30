@@ -77,12 +77,14 @@ def _generate_and_send(user_id: str, question: str, channel_id: str, callback_ur
         # 1. Двухшаговая цепочка: методист → тьютор-геймер
         db_logger.log("INFO", "STEP1_START", "Шаг 1: методист", user_id=user_id, channel_id=channel_id)
         methodologist_output, final_output = generate_explanation(question)
-        db_logger.log("INFO", "STEP2_DONE", "Шаг 2: тьютор-геймер завершён", user_id=user_id, channel_id=channel_id)
+        db_logger.log("INFO", "STEP1_RESULT", methodologist_output[:500], user_id=user_id, channel_id=channel_id)
+        db_logger.log("INFO", "STEP2_RESULT", final_output[:500], user_id=user_id, channel_id=channel_id)
         parsed = parse_response(final_output, methodologist_output)
 
         # 2. Генерируем изображение
         db_logger.log("INFO", "IMAGE_START", "Генерация изображения начата", user_id=user_id, channel_id=channel_id)
         img_prompt = generate_image_prompt(parsed["explanation"])
+        db_logger.log("INFO", "IMAGE_PROMPT", img_prompt[:500], user_id=user_id, channel_id=channel_id)
 
         try:
             image_bytes = generate_image(img_prompt)
