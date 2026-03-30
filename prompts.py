@@ -163,6 +163,7 @@ RULES:
 - NO characters, NO people, NO animals, NO faces
 - Include magical/educational elements (glowing numbers, floating letters, etc.)
 - Bright colors, warm atmosphere, children's book style
+- NO letters, NO numbers, NO text, NO inscriptions, NO mathematical signs, NO symbols of any kind in the image.
 
 OUTPUT (one paragraph, English only):
 "Children's book illustration in [EXACT STYLE] style: [detailed scene description with location, objects, atmosphere, educational elements]. Bright colors, warm lighting. No characters, no people, no animals."

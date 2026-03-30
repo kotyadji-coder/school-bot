@@ -63,9 +63,28 @@ def _generate_html(title: str, image_url: str | None, explanation_text: str, met
             return f'<h2 class="mission-header">{line}</h2>'
         return f"<p>{line}</p>"
 
-    paragraphs = "".join(
-        _render_line(p) for p in explanation_text.split("\n") if p.strip()
-    )
+    # Split content at МИССИЯ boundary for separate print pages
+    lines = [p for p in explanation_text.split("\n") if p.strip()]
+    before_mission = []
+    from_mission = []
+    mission_found = False
+    for line in lines:
+        if "МИССИЯ" in line.strip():
+            mission_found = True
+        if mission_found:
+            from_mission.append(line)
+        else:
+            before_mission.append(line)
+
+    explanation_paragraphs = "".join(_render_line(p) for p in before_mission)
+    tasks_paragraphs = "".join(_render_line(p) for p in from_mission)
+    tasks_html = f'<div class="tasks-section">{tasks_paragraphs}</div>' if tasks_paragraphs else ""
+
+    # Fallback: if no МИССИЯ found, put everything in explanation
+    if not mission_found:
+        explanation_paragraphs = "".join(_render_line(p) for p in lines)
+        tasks_html = ""
+
     description = re.sub(r'<[^>]+>', '', explanation_text.strip())[:150].replace('"', '&quot;')
     if len(explanation_text.strip()) > 150:
         description += "…"
@@ -220,6 +239,21 @@ def _generate_html(title: str, image_url: str | None, explanation_text: str, met
             color: #ff6b6b;
         }}
 
+        .tasks-section {{
+            margin-top: 8px;
+            line-height: 1.8;
+            font-size: 1.05em;
+            color: #2D3561;
+        }}
+
+        .tasks-section p {{
+            margin-bottom: 1.2em;
+        }}
+
+        .tasks-section p:last-child {{
+            margin-bottom: 0;
+        }}
+
         .action-bar {{
             display: flex;
             justify-content: center;
@@ -255,6 +289,7 @@ def _generate_html(title: str, image_url: str | None, explanation_text: str, met
             body {{
                 background: white;
                 padding: 0;
+                font-size: 11pt;
             }}
 
             .container {{
@@ -264,7 +299,38 @@ def _generate_html(title: str, image_url: str | None, explanation_text: str, met
             }}
 
             .content {{
-                padding: 16px 24px 24px;
+                padding: 12px 20px 20px;
+            }}
+
+            .lesson-title {{
+                font-size: 1.6em;
+            }}
+
+            .explanation-text {{
+                font-size: 1em;
+            }}
+
+            .tasks-section {{
+                font-size: 1em;
+                page-break-before: always;
+                break-before: page;
+                margin-top: 0;
+                padding-top: 8px;
+            }}
+
+            .tasks-section .mission-header {{
+                margin-top: 0;
+                padding-top: 0;
+                border-top: none;
+            }}
+
+            .methodologist-notes {{
+                page-break-before: always;
+                break-before: page;
+                margin-top: 0;
+                border-radius: 0;
+                border-left: 4px solid #10B981;
+                padding: 20px 24px;
             }}
 
             .action-bar {{
@@ -314,8 +380,9 @@ def _generate_html(title: str, image_url: str | None, explanation_text: str, met
             {f'<div class="image-container"><img src="{image_url}" alt="{title}" loading="lazy"></div>' if image_url else ''}
 
             <div class="explanation-text">
-                {paragraphs}
+                {explanation_paragraphs}
             </div>
+            {tasks_html}
             {notes_html}
 
             <div class="action-bar" id="action-bar">

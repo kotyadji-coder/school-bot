@@ -29,7 +29,7 @@ def send_message(peer_id: str, status: str = "success", channel_id: str | None =
     block_id = config["block_error"] if status == "error" else config["block_success"]
     logger.warning("SmartBot routing: channel_id=%s status=%s block_id=%s", resolved_channel_id, status, block_id)
     if lesson_url:
-        data = {"Messagetext": f"✅ Урок готов!\n\nВот твой урок: {lesson_url}"}
+        data = {"Messagetext": f"🌟 Урок готов: {lesson_url}\n\nЧто внутри:\n• Объяснение в стиле любимого героя\n• Задания-миссии\n• Рекомендации методиста для родителей\n\n🖨 Кнопка «Распечатать» внизу страницы"}
     else:
         data = {}
     payload = {
