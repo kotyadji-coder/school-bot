@@ -1,13 +1,32 @@
 import os
 
 import vertexai
-from vertexai.generative_models import GenerativeModel
+from vertexai.generative_models import GenerativeModel, HarmBlockThreshold, HarmCategory, SafetySetting
 
 from prompts import GENERATE_IMAGE_PROMPT_PROMPT, METHODOLOGIST_PROMPT, TUTOR_GAMER_PROMPT
 
 PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
 REGION = "global"
 MODEL_NAME = "gemini-3.1-pro-preview"
+
+CHILD_SAFETY_SETTINGS = [
+    SafetySetting(
+        category=HarmCategory.HARM_CATEGORY_HARASSMENT,
+        threshold=HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+    ),
+    SafetySetting(
+        category=HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+        threshold=HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+    ),
+    SafetySetting(
+        category=HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+        threshold=HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+    ),
+    SafetySetting(
+        category=HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+        threshold=HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+    ),
+]
 
 
 def _get_model() -> GenerativeModel:
@@ -33,7 +52,7 @@ def generate_explanation(question: str) -> tuple[str, str]:
 
     # Step 1: methodologist
     step1_prompt = METHODOLOGIST_PROMPT.format(question=question)
-    step1_response = model.generate_content(step1_prompt)
+    step1_response = model.generate_content(step1_prompt, safety_settings=CHILD_SAFETY_SETTINGS)
     methodologist_output = step1_response.text.strip()
 
     # Step 2: tutor-gamer receives original question + Step 1 output
@@ -41,7 +60,7 @@ def generate_explanation(question: str) -> tuple[str, str]:
         question=question,
         methodologist_output=methodologist_output,
     )
-    step2_response = model.generate_content(step2_prompt)
+    step2_response = model.generate_content(step2_prompt, safety_settings=CHILD_SAFETY_SETTINGS)
     final_output = step2_response.text.strip()
 
     return methodologist_output, final_output
@@ -62,5 +81,5 @@ def generate_image_prompt(explanation: str) -> str:
     """Генерирует промт для иллюстрации на основе финального текста урока."""
     model = _get_model()
     prompt = GENERATE_IMAGE_PROMPT_PROMPT.format(story=explanation)
-    response = model.generate_content(prompt)
+    response = model.generate_content(prompt, safety_settings=CHILD_SAFETY_SETTINGS)
     return response.text.strip()

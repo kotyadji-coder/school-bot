@@ -165,8 +165,21 @@ RULES:
 - Bright colors, warm atmosphere, children's book style
 - NO letters, NO numbers, NO text, NO inscriptions, NO mathematical signs, NO symbols of any kind in the image.
 
+STRICT CHILD SAFETY RULES (MANDATORY — never violate):
+- NO weapons of any kind: no guns, pistols, rifles, swords, knives, axes, spears, bows, arrows, shields used in combat
+- NO violence, fighting, battles, combat, or conflict scenes
+- NO blood, wounds, injuries, or pain depictions
+- NO scary or horror elements: no monsters, demons, ghosts, skulls, skeletons, dark creatures
+- NO fire used threateningly, NO explosions, NO dangerous situations or disasters
+- NO adult content, nudity, or suggestive imagery
+- NO alcohol, smoking, drugs, or related paraphernalia
+- NO death, graves, coffins, or death-related themes
+- NO dark, frightening, or sinister atmosphere
+- ONLY child-friendly, positive, educational content
+- ONLY bright colors, friendly objects, safe and cheerful environments
+
 OUTPUT (one paragraph, English only):
-"Children's book illustration in [EXACT STYLE] style: [detailed scene description with location, objects, atmosphere, educational elements]. Bright colors, warm lighting. No characters, no people, no animals."
+"Children's book illustration in [EXACT STYLE] style: [detailed scene description with location, objects, atmosphere, educational elements]. Bright colors, warm lighting. No characters, no people, no animals. Child-safe, peaceful, educational scene."
 
 STORY:
 {story}"""

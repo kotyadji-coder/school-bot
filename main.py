@@ -33,6 +33,40 @@ CONTENT_DIR = Path(__file__).parent / "content"
 logger = logging.getLogger("school-bot")
 
 
+_UNSAFE_KEYWORDS = re.compile(
+    r"\b("
+    # weapons
+    r"оружи[ея]|пистолет|нож|ножи|меч|мечи|ружь[её]|автомат|пулемёт|граната|бомб[аы]|взрывчатк[аи]|топор"
+    r"|gun|pistol|rifle|sword|knife|bomb|grenade|weapon|cannon|axe"
+    # violence / blood
+    r"|насили[ея]|убийств[ао]|убийц[аы]|драк[аи]|убить|убивать|кров[иь]|ран[еёи]ни[ея]|смерт[иь]|мёртв"
+    r"|violence|murder|kill|killing|blood|death|dead|dying|gore"
+    # horror
+    r"|ужас|монстр|призрак|череп|скелет|демон|дьявол|зомби"
+    r"|horror|monster|ghost|skull|skeleton|demon|devil|zombie"
+    # adult
+    r"|секс|порно|голый|голая|нагой"
+    r"|sex|porn|nude|naked"
+    # alcohol / drugs / smoking
+    r"|алкоголь|пиво|водк[аи]|вин[оа]|наркотик|куритель|сигарет"
+    r"|alcohol|beer|vodka|drug|drugs|smoking|cigarette"
+    r")\b",
+    re.IGNORECASE,
+)
+
+_SAFE_UNIVERSE_REPLACEMENT = "нейтральный мир приключений"
+
+
+def _sanitize_question(question: str) -> str:
+    """Replace dangerous keywords with a safe universe to protect child content."""
+    if _UNSAFE_KEYWORDS.search(question):
+        # Remove only the unsafe universe/character part by replacing it with a safe alternative.
+        # Strategy: keep everything up to the known structure keywords (class, topic) and swap the universe.
+        sanitized = _UNSAFE_KEYWORDS.sub(_SAFE_UNIVERSE_REPLACEMENT, question)
+        return sanitized
+    return question
+
+
 def _check_password(password: str):
     if password != ADMIN_PASSWORD:
         raise HTTPException(status_code=403, detail="Forbidden")
@@ -74,6 +108,12 @@ app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "static")
 def _generate_and_send(user_id: str, question: str, channel_id: str, callback_url: str | None = None) -> None:
     """Вся тяжёлая работа — в отдельном потоке, чтобы не блокировать HTTP-ответ."""
     try:
+        # 0. Sanitize input
+        sanitized_question = _sanitize_question(question)
+        if sanitized_question != question:
+            db_logger.log("WARNING", "INPUT_SANITIZED", "Запрос содержал небезопасные ключевые слова — заменены", user_id=user_id, channel_id=channel_id)
+        question = sanitized_question
+
         # 1. Двухшаговая цепочка: методист → тьютор-геймер
         db_logger.log("INFO", "STEP1_START", "Шаг 1: методист", user_id=user_id, channel_id=channel_id)
         methodologist_output, final_output = generate_explanation(question)
