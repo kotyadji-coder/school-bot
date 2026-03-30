@@ -28,7 +28,10 @@ def send_message(peer_id: str, status: str = "success", channel_id: str | None =
     config = CHANNEL_CONFIGS.get(resolved_channel_id, CHANNEL_CONFIGS[DEFAULT_CHANNEL_ID])
     block_id = config["block_error"] if status == "error" else config["block_success"]
     logger.warning("SmartBot routing: channel_id=%s status=%s block_id=%s", resolved_channel_id, status, block_id)
-    data = {"lesson_url": lesson_url} if lesson_url else {}
+    if lesson_url:
+        data = {"Messagetext": f"✅ Урок готов!\n\nВот твой урок: {lesson_url}"}
+    else:
+        data = {}
     payload = {
         "access_token": ACCESS_TOKEN,
         "v": "0.0.1",
