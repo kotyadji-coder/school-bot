@@ -7,7 +7,7 @@ from prompts import GENERATE_IMAGE_PROMPT_PROMPT, METHODOLOGIST_PROMPT, TUTOR_GA
 
 PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
 REGION = "global"
-MODEL_NAME = "gemini-3-pro-preview"
+MODEL_NAME = "gemini-3.1-pro-preview"
 
 
 def _get_model() -> GenerativeModel:
