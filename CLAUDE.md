@@ -39,3 +39,12 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 
 ## Deploying changes
 When deploying changes, always: git add, git commit, git push, then ssh to VPS and git pull
+
+## VPS deployment details
+- **VPS IP:** `72.56.126.111`
+- **SSH Key:** `~/.ssh/vps_key`
+- **SSH Command:** `ssh -i ~/.ssh/vps_key root@72.56.126.111`
+- **VPS Path:** `/opt/school-bot`
+- **Port:** `8001`
+- **Domain:** `edtale.ru`
+- **systemd service:** `school-bot`
