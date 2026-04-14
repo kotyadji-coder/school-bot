@@ -36,3 +36,6 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 ## Admin panel
 - `/admin/logs?password=...` — last 100 log entries
 - `/admin/stats?password=...` — today's lessons and errors
+
+## Deploying changes
+When deploying changes, always: git add, git commit, git push, then ssh to VPS and git pull
