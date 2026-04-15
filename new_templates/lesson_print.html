@@ -344,20 +344,35 @@
 
         /* ── PRINT OVERRIDES ── */
         @media print {
-            html, body { margin: 0; padding: 0; background: #fff; font-size: 12pt; }
+            @page { margin: 15mm !important; }
+
+            /* Force block layout on all ancestors so browser pagination works correctly */
+            html, body, .container {
+                display: block !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #fff !important;
+                font-size: 12pt;
+                height: auto !important;
+                overflow: visible !important;
+            }
+
             a { text-decoration: none; color: inherit; }
 
             /* @page supplies all margins — strip screen-layout constraints from container */
             .container {
                 max-width: none !important;
                 width: auto !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                background: #fff !important;
                 box-shadow: none !important;
             }
 
             .print-image { max-width: 50%; max-height: none; object-fit: contain; margin: 0 auto 20px; }
+
+            /* Allow natural page flow */
+            .theory-section, .tasks-section, .story-card, .task-card {
+                page-break-inside: auto;
+                break-inside: auto;
+            }
 
             /* Hide all interactive / screen-only UI */
             .print-btn-bar { display: none !important; }
