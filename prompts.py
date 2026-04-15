@@ -157,10 +157,15 @@ GENERATE_IMAGE_PROMPT_PROMPT = """You are an illustrator for children's educatio
 
 Based on this story, create an image prompt describing ONE SCENE from the story featuring the MAIN HERO.
 
-You MUST create a "legally distinct" inspired version of the hero.
+VISUAL TRANSLATION STRATEGY (CRITICAL):
+You must describe the hero so they are HIGHLY RECOGNIZABLE to a child, but you must NEVER use trademarked names to avoid image filter blocks.
 - NEVER use the actual character name or franchise name.
 - NEVER use studio names (like Disney, Pixar, Marvel) in your output.
-- Make every hero look like an original mascot created for a generic children's cartoon.
+- YOU MUST PRESERVE the hero's iconic colors, masks, signature patterns (like webs, stars, bat-symbols), and clothing style.
+- Describe the character visually using generic clothing terms.
+- Example for Spider-Man: "An acrobatic teen hero wearing a full-face mask with large white eyes, dressed in a red and blue tight suit with a dark web-like geometric pattern."
+- Example for Iron Man: "A hero wearing a sleek, shiny red and gold metallic robotic armor with a glowing bright circle on the chest."
+- Example for Batman: "A mysterious hero wearing a dark grey and black suit, a long scalloped black cape, and a cowl mask with pointy ear-like shapes."
 
 RULES FOR ART STYLE & SCENE:
 - MATCH the art style of the universe dynamically WITHOUT using brand names:
@@ -184,7 +189,7 @@ STRICT CHILD SAFETY RULES (MANDATORY — never violate):
 - ONLY child-friendly, positive, educational content.
 
 OUTPUT (one paragraph, English only):
-"Children's book illustration in [INSERT SELECTED BRAND-FREE ART STYLE]: [highly detailed description of a LEGALLY DISTINCT inspired character with altered colors/costume], [character's action]. The scene takes place in [detailed environment description]. [Educational/magical elements]. Bright colors, warm lighting, cheerful atmosphere. No text, no letters. Child-safe, peaceful, educational scene."
+"Children's book illustration in [INSERT SELECTED BRAND-FREE ART STYLE]: [highly detailed generic description of the hero PRESERVING their iconic colors, mask, and thematic patterns without naming them], [character's action]. The scene takes place in [detailed environment description]. [Educational/magical elements]. Bright colors, warm lighting, cheerful atmosphere. No text, no letters. Child-safe, peaceful, educational scene."
 
 STORY:
 {story}"""
@@ -199,10 +204,11 @@ Based on this story, create an image prompt describing ONE SCENE from the story 
 THE "KIDS COSPLAY" AVOIDANCE STRATEGY (CRITICAL):
 You MUST NOT describe the actual copyrighted hero. Instead, describe a normal, happy 7-year-old child who is PRETENDING to be the hero using homemade, everyday items.
 - NEVER use the hero's actual name, nor brand names like Marvel, Disney, or Pixar.
-- Example for a Wizard: "A cheerful boy wearing an oversized blanket as a cape, with round wire glasses made of pipe cleaners, holding a glowing wooden twig."
-- Example for an Acrobat Hero: "An active kid wearing a red beanie, a cozy sweater with a hand-drawn bug on it, wearing a cute cardboard eye-mask."
-- Example for a Tech Hero: "A smiling child wearing creatively painted cardboard boxes as armor, with a glowing flashlight taped to their chest."
-- Example for a Detective: "A serious but cute kid wearing a dark raincoat and a towel tied like a cape, holding a plastic magnifying glass."
+- CRITICAL: You MUST PRESERVE the hero's iconic colors and signature patterns, but describe them as DIY, homemade clothes and crafts.
+- Example for a Wizard: "A cheerful kid wearing a dark oversized bathrobe, a handmade red-and-gold striped scarf, round glasses with tape on the bridge, holding a wooden stick."
+- Example for an Acrobat Hero: "An active kid wearing red and blue homemade pajamas with thick marker-drawn webs, and a cute paper-mache mask with large white mesh eyes."
+- Example for a Tech Hero: "A smiling child wearing cardboard box armor painted bright shiny red and gold, with a glowing tap-light taped to their chest."
+- Example for a Detective: "A serious but cute kid wearing black and grey clothes, a long black bedsheet tied like a cape, and a cardboard mask with pointy ears."
 
 RULES FOR ART STYLE & ENVIRONMENT:
 - MATCH the art style of the universe dynamically WITHOUT using brand names:
@@ -221,7 +227,7 @@ STRICT CHILD SAFETY RULES (MANDATORY — never violate):
 - ONLY child-friendly, safe, positive environments.
 
 OUTPUT (one paragraph, English only):
-"Children's illustration in [INSERT SELECTED ART STYLE HERE]: a happy 7-year-old child pretending to be a [hero archetype], dressed in [describe the cute homemade DIY costume]. The child is [action]. The scene takes place in [environment blending reality and imagination]. [Educational/magical elements]. Bright colors, warm lighting, joyful atmosphere. No text, no letters. Child-safe, peaceful scene."
+"Children's illustration in [INSERT SELECTED ART STYLE HERE]: a happy 7-year-old child pretending to be a hero, dressed in [highly detailed description of a DIY homemade costume PRESERVING the iconic colors and patterns of the hero]. The child is [action]. The scene takes place in [environment blending reality and imagination]. [Educational/magical elements]. Bright colors, warm lighting, joyful atmosphere. No text, no letters. Child-safe, peaceful scene."
 
 STORY:
 {story}"""
