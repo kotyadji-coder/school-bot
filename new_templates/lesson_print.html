@@ -10,10 +10,10 @@
         /* ── RESET ── */
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-        /* ── PAGE SIZE ── */
+        /* ── PAGE SIZE — governs ALL printed pages, desktop and mobile ── */
         @page {
             size: A4 portrait;
-            margin: 2cm; /* physical margins applied to every printed page */
+            margin: 15mm;
         }
 
         /* ── BASE ── */
@@ -335,31 +335,25 @@
         }
 
         /* ── PRINT OVERRIDES ── */
-        @page {
-            size: A4 portrait;
-            margin: 2cm;
-        }
         @media print {
-            html, body {
-                margin: 0 !important;
-                padding: 0 !important;
-                background: #fff !important;
-                font-size: 12pt;
-                width: 100%;
-            }
-            .print-image { max-width: 50%; max-height: none; object-fit: contain; margin: 0 auto 20px; }
+            /* Let @page handle all outer margins — do NOT set margin/padding on html or body */
+            body { background: #fff; font-size: 12pt; }
             a { text-decoration: none; color: inherit; }
+
+            /* Strip screen-layout constraints so @page margin is the only margin */
             .container {
-                max-width: 100% !important;
-                width: 100% !important;
+                max-width: none !important;
+                width: auto !important;
                 padding: 0 !important;
                 margin: 0 !important;
                 background: #fff !important;
                 box-shadow: none !important;
             }
-            /* hide interactive UI */
+
+            .print-image { max-width: 50%; max-height: none; object-fit: contain; margin: 0 auto 20px; }
+
+            /* Hide all interactive / screen-only UI */
             .print-btn-bar { display: none !important; }
-            .tg-overlay { display: none !important; }
             .tg-banner { display: none !important; }
         }
     </style>
@@ -495,11 +489,37 @@
 <script>
 (function () {
     var ua = navigator.userAgent || '';
-    // Telegram in-app browser exposes "Telegram" in the UA on most platforms
-    if (/Telegram/i.test(ua)) {
-        document.getElementById('tgBanner').style.display = 'block';
-        document.getElementById('printBtnBar').style.display = 'none';
+
+    // Layer 1: official Telegram WebApp JS API
+    var isTelegramWebApp = !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData !== undefined);
+
+    // Layer 2: UA contains "Telegram" (desktop / some Android builds)
+    var isTelegramUA = /Telegram/i.test(ua);
+
+    // Layer 3: Android WebView generic flag (covers TG and other in-app browsers)
+    var isAndroidWebView = /Android/i.test(ua) && /wv\b/.test(ua);
+
+    // Layer 4: iOS in-app browser — no Safari in UA but has WebKit
+    var isIOSInApp = /iPhone|iPad|iPod/i.test(ua) && !/Safari/i.test(ua) && /AppleWebKit/i.test(ua);
+
+    var isConfirmedTelegram = isTelegramWebApp || isTelegramUA || isAndroidWebView || isIOSInApp;
+
+    // Layer 5: any mobile device (fallback — banner shown above button, button kept)
+    var isMobile = /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(ua) || navigator.maxTouchPoints > 1;
+
+    var banner  = document.getElementById('tgBanner');
+    var btnBar  = document.getElementById('printBtnBar');
+
+    if (isConfirmedTelegram) {
+        // Confirmed restricted environment — hide print button, show banner only
+        banner.style.display = 'block';
+        btnBar.style.display  = 'none';
+    } else if (isMobile) {
+        // Unknown mobile browser — show banner above button as a safety notice
+        banner.style.display = 'block';
+        // keep btnBar visible so Safari/Chrome mobile users can still print
     }
+    // Desktop: no banner, just the print button
 })();
 </script>
 </body>
