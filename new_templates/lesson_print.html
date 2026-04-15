@@ -190,42 +190,48 @@
             display: inline-block;
         }
 
-        /* ── DRAG AND DROP → DRAW LINES ── */
-        .connect-hint {
-            font-size: 8.5pt;
-            color: #9ca3af;
-            margin-bottom: 10px;
-            font-style: italic;
+        /* ── DRAG AND DROP → WORD BANK + SENTENCES ── */
+        .dnd-print-bank {
+            font-size: 11pt;
+            margin-bottom: 14px;
+            padding: 8px 12px;
+            border: 1.5px dashed #9ca3af;
+            border-radius: 8px;
+            line-height: 1.8;
         }
 
-        .connect-columns {
-            display: flex;
-            gap: 0;
-            align-items: flex-start;
+        .dnd-print-bank-label {
+            font-weight: 800;
+            color: #6366f1;
+            margin-right: 6px;
         }
 
-        .connect-col {
-            flex: 1;
+        .dnd-print-word { font-weight: 700; color: #1f2937; }
+
+        .dnd-print-sentences {
             display: flex;
             flex-direction: column;
+            gap: 10px;
+        }
+
+        .dnd-print-sentence {
+            display: flex;
+            align-items: baseline;
             gap: 8px;
+            font-size: 12pt;
         }
 
-        .connect-col-spacer {
-            flex: 0 0 60px; /* gap between columns for drawing lines */
-        }
+        .dnd-print-num { font-weight: 900; color: #6366f1; flex-shrink: 0; }
 
-        .connect-item {
-            border: 1.5px solid #6b7280;
-            border-radius: 6px;
-            padding: 5px 12px;
-            font-size: 10pt;
-            font-weight: 700;
-            text-align: center;
-        }
+        .dnd-print-text { font-weight: 600; flex: 1; min-width: 0; }
 
-        .connect-col:first-child .connect-item { background: #f9fafb; }
-        .connect-col:last-child  .connect-item { background: #fff; }
+        .dnd-print-blank {
+            display: inline-block;
+            width: 120px;
+            border-bottom: 1.5px solid #374151;
+            height: 18px;
+            flex-shrink: 0;
+        }
 
         /* ── WORD CHIP (shared) ── */
         .word-chip {
@@ -437,21 +443,20 @@
                 {% endfor %}
             </div>
 
-            {# ── DRAG AND DROP: draw-lines two-column ── #}
+            {# ── DRAG AND DROP: word bank + sentence blanks ── #}
             {% elif task.type == 'drag_and_drop' %}
-            <p class="connect-hint">Соедини линией каждый элемент из левого столбца с подходящим из правого.</p>
-            <div class="connect-columns">
-                <div class="connect-col">
-                    {% for zone in task.zones %}
-                    <div class="connect-item">{{ zone }}</div>
-                    {% endfor %}
+            <div class="dnd-print-bank">
+                <span class="dnd-print-bank-label">Банк слов:</span>
+                <span class="dnd-print-bank-words">{% for item in task['items'] %}<span class="dnd-print-word">{{ item }}</span>{% if not loop.last %} &nbsp;·&nbsp; {% endif %}{% endfor %}</span>
+            </div>
+            <div class="dnd-print-sentences">
+                {% for zone in task.zones %}
+                <div class="dnd-print-sentence">
+                    <span class="dnd-print-num">{{ loop.index }}.</span>
+                    <span class="dnd-print-text">{{ zone }}</span>
+                    <span class="dnd-print-blank"></span>
                 </div>
-                <div class="connect-col-spacer"></div>
-                <div class="connect-col">
-                    {% for item in task['items'] %}
-                    <div class="connect-item">{{ item }}</div>
-                    {% endfor %}
-                </div>
+                {% endfor %}
             </div>
 
             {# ── FILL IN THE BLANK: answer line ── #}
@@ -523,12 +528,23 @@
 
     document.querySelectorAll('.ordering-word-list').forEach(function (p) {
         var spans = shuffleArray(Array.from(p.querySelectorAll('.ordering-word')));
-        // Rebuild the paragraph content with shuffled spans and separators
         p.innerHTML = '';
         spans.forEach(function (span, idx) {
             p.appendChild(span);
             if (idx < spans.length - 1) {
                 p.insertAdjacentHTML('beforeend', ' \u00a0·\u00a0 ');
+            }
+        });
+    });
+
+    // Shuffle DnD word bank so printed items don't align with their zones
+    document.querySelectorAll('.dnd-print-bank-words').forEach(function (container) {
+        var spans = shuffleArray(Array.from(container.querySelectorAll('.dnd-print-word')));
+        container.innerHTML = '';
+        spans.forEach(function (span, idx) {
+            container.appendChild(span);
+            if (idx < spans.length - 1) {
+                container.insertAdjacentHTML('beforeend', ' \u00a0·\u00a0 ');
             }
         });
     });

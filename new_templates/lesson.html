@@ -410,6 +410,44 @@
             color: var(--text-muted);
         }
 
+        /* ── DND WORD-BANK + SENTENCES LAYOUT ── */
+        .dnd-bank-label {
+            font-size: 0.73rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+        }
+
+        .dnd-sentences {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .dnd-sentence {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(99,102,241,0.10);
+        }
+        .dnd-sentence:last-child { border-bottom: none; }
+
+        .dnd-sentence-label {
+            flex: 1;
+            min-width: 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        /* Compact drop zone inside a sentence row — no flex-grow */
+        .dnd-sentences .drop-zone {
+            flex: 0 0 auto;
+            min-width: 120px;
+        }
+
         /* ── FILL IN BLANK ── */
         .fitb-row {
             display: flex;
@@ -676,18 +714,21 @@
 
             {# ── DRAG AND DROP ── #}
             {% elif task.type == 'drag_and_drop' %}
-            <span class="task-ui-hint">(перетащи карточку на нужное значение)</span>
+            <span class="task-ui-hint">(перетащи слово из банка слов в нужное место)</span>
             <div class="dnd-wrapper" data-correct='{{ task.correct | tojson }}'>
+                <span class="dnd-bank-label">Банк слов</span>
                 <div class="drag-pool">
                     {% for item in task['items'] %}
                     <div class="drag-item" draggable="true" data-item="{{ item }}">{{ item }}</div>
                     {% endfor %}
                 </div>
-                <div class="drop-zones">
+                <div class="dnd-sentences">
                     {% for zone in task.zones %}
-                    <div class="drop-zone" data-zone="{{ zone }}">
-                        <div class="zone-slot"></div>
-                        <div class="zone-label">{{ zone }}</div>
+                    <div class="dnd-sentence">
+                        <span class="dnd-sentence-label">{{ zone }}</span>
+                        <div class="drop-zone" data-zone="{{ zone }}">
+                            <div class="zone-slot"></div>
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
