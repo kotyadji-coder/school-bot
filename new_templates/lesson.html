@@ -193,7 +193,7 @@
         }
 
         /* ── TASKS SECTION ── */
-        .tasks-section { margin-top: 0; }
+        .tasks-section { margin-top: 3rem; }
 
         .tasks-heading {
             font-size: 1.4rem;
@@ -774,6 +774,21 @@
     })();
 
 document.addEventListener('DOMContentLoaded', function () {
+
+    // ── FISHER-YATES SHUFFLE ─────────────────────────────────────────────────
+    function shuffleArray(arr) {
+        for (var i = arr.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+        }
+        return arr;
+    }
+
+    // Shuffle drag-pool items so the initial order doesn't reveal the answer
+    document.querySelectorAll('.drag-pool').forEach(function (pool) {
+        var items = shuffleArray(Array.from(pool.children));
+        items.forEach(function (item) { pool.appendChild(item); });
+    });
 
     // ── HELPERS ─────────────────────────────────────────────────────────────
     function showFeedback(el, text) {

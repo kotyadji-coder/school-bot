@@ -10,10 +10,10 @@
         /* ── RESET ── */
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-        /* ── PAGE SIZE — governs ALL printed pages, desktop and mobile ── */
+        /* ── PAGE SIZE — zero @page margin so browser doesn't add headers/footers ── */
         @page {
             size: A4 portrait;
-            margin: 15mm;
+            margin: 0;
         }
 
         /* ── BASE ── */
@@ -336,18 +336,18 @@
 
         /* ── PRINT OVERRIDES ── */
         @media print {
-            /* Let @page handle all outer margins — do NOT set margin/padding on html or body */
-            body { background: #fff; font-size: 12pt; }
+            html, body { margin: 0; padding: 0; background: #fff; font-size: 12pt; }
             a { text-decoration: none; color: inherit; }
 
-            /* Strip screen-layout constraints so @page margin is the only margin */
+            /* Use padding on .container for physical margins instead of relying on @page */
             .container {
-                max-width: none !important;
-                width: auto !important;
-                padding: 0 !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 15mm !important;
                 margin: 0 !important;
                 background: #fff !important;
                 box-shadow: none !important;
+                box-sizing: border-box !important;
             }
 
             .print-image { max-width: 50%; max-height: none; object-fit: contain; margin: 0 auto 20px; }
@@ -463,7 +463,9 @@
             {# ── ORDERING: horizontal word list + numbered boxes ── #}
             {% elif task.type == 'ordering' %}
             <p class="ordering-word-list">
-                {{ task['items'] | join(' &nbsp;·&nbsp; ') }}
+                {% for item in task['items'] %}
+                <span class="ordering-word">{{ item }}</span>{% if not loop.last %} &nbsp;·&nbsp; {% endif %}
+                {% endfor %}
             </p>
             <div class="ordering-boxes">
                 {% for item in task['items'] %}
@@ -490,36 +492,58 @@
 (function () {
     var ua = navigator.userAgent || '';
 
-    // Layer 1: official Telegram WebApp JS API
-    var isTelegramWebApp = !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData !== undefined);
+    // Signal 1: Telegram's official JS API (most reliable)
+    var isTelegramAPI = !!(window.Telegram && window.Telegram.WebApp);
 
-    // Layer 2: UA contains "Telegram" (desktop / some Android builds)
+    // Signal 2: UA explicitly contains "Telegram"
     var isTelegramUA = /Telegram/i.test(ua);
 
-    // Layer 3: Android WebView generic flag (covers TG and other in-app browsers)
-    var isAndroidWebView = /Android/i.test(ua) && /wv\b/.test(ua);
+    // Signal 3: Android in-app WebView flag ("wv" token in UA)
+    var isAndroidWebView = /Android/i.test(ua) && /\bwv\b/.test(ua);
 
-    // Layer 4: iOS in-app browser — no Safari in UA but has WebKit
-    var isIOSInApp = /iPhone|iPad|iPod/i.test(ua) && !/Safari/i.test(ua) && /AppleWebKit/i.test(ua);
+    // Signal 4: iOS in-app browser — has WebKit but NO "Safari/" token.
+    // Regular iOS Safari ends with "...Mobile/15E148 Safari/604.1" — the slash is the key.
+    // WKWebView inside apps (including Telegram iOS) does NOT include "Safari/".
+    var isIOSInApp = /iPhone|iPad|iPod/i.test(ua) && !/Safari\//i.test(ua) && /AppleWebKit/i.test(ua);
 
-    var isConfirmedTelegram = isTelegramWebApp || isTelegramUA || isAndroidWebView || isIOSInApp;
+    var isWebView = isTelegramAPI || isTelegramUA || isAndroidWebView || isIOSInApp;
 
-    // Layer 5: any mobile device (fallback — banner shown above button, button kept)
-    var isMobile = /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(ua) || navigator.maxTouchPoints > 1;
+    var banner = document.getElementById('tgBanner');
+    var btnBar = document.getElementById('printBtnBar');
 
-    var banner  = document.getElementById('tgBanner');
-    var btnBar  = document.getElementById('printBtnBar');
-
-    if (isConfirmedTelegram) {
-        // Confirmed restricted environment — hide print button, show banner only
+    if (isWebView) {
+        // Restricted in-app browser — hide print button, show instruction banner
         banner.style.display = 'block';
         btnBar.style.display  = 'none';
-    } else if (isMobile) {
-        // Unknown mobile browser — show banner above button as a safety notice
-        banner.style.display = 'block';
-        // keep btnBar visible so Safari/Chrome mobile users can still print
+    } else {
+        // Regular browser (Safari, Chrome, Firefox, desktop) — hide banner, show print button
+        banner.style.display = 'none';
+        btnBar.style.display  = 'flex';
     }
-    // Desktop: no banner, just the print button
+})();
+
+// ── SHUFFLE ORDERING WORD LISTS ──────────────────────────────────────────────
+// Printed worksheets must not reveal the correct order of items.
+(function () {
+    function shuffleArray(arr) {
+        for (var i = arr.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+        }
+        return arr;
+    }
+
+    document.querySelectorAll('.ordering-word-list').forEach(function (p) {
+        var spans = shuffleArray(Array.from(p.querySelectorAll('.ordering-word')));
+        // Rebuild the paragraph content with shuffled spans and separators
+        p.innerHTML = '';
+        spans.forEach(function (span, idx) {
+            p.appendChild(span);
+            if (idx < spans.length - 1) {
+                p.insertAdjacentHTML('beforeend', ' \u00a0·\u00a0 ');
+            }
+        });
+    });
 })();
 </script>
 </body>
