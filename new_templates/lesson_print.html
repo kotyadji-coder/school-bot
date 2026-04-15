@@ -10,10 +10,10 @@
         /* ── RESET ── */
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-        /* ── PAGE SIZE — zero @page margin so browser doesn't add headers/footers ── */
+        /* ── PAGE SIZE ── */
         @page {
             size: A4 portrait;
-            margin: 0;
+            margin: 15mm;
         }
 
         /* ── BASE ── */
@@ -339,15 +339,14 @@
             html, body { margin: 0; padding: 0; background: #fff; font-size: 12pt; }
             a { text-decoration: none; color: inherit; }
 
-            /* Use padding on .container for physical margins instead of relying on @page */
+            /* @page supplies all margins — strip screen-layout constraints from container */
             .container {
-                max-width: 100% !important;
-                width: 100% !important;
-                padding: 15mm !important;
+                max-width: none !important;
+                width: auto !important;
+                padding: 0 !important;
                 margin: 0 !important;
                 background: #fff !important;
                 box-shadow: none !important;
-                box-sizing: border-box !important;
             }
 
             .print-image { max-width: 50%; max-height: none; object-fit: contain; margin: 0 auto 20px; }
