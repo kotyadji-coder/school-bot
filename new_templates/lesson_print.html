@@ -19,10 +19,10 @@
         /* ── BASE ── */
         body {
             font-family: 'Nunito', sans-serif;
-            font-size: 11pt;
+            font-size: 13pt;
             color: #1f2937;
             background: #f3f4f6;
-            line-height: 1.6;
+            line-height: 1.7;
         }
 
         .container {
@@ -103,7 +103,7 @@
         .story-text {
             flex: 1;
             min-width: 0;
-            font-size: 10.5pt;
+            font-size: 12pt;
             line-height: 1.65;
         }
 
@@ -152,7 +152,7 @@
         }
 
         .task-question {
-            font-size: 10.5pt;
+            font-size: 12pt;
             font-weight: 700;
             margin-bottom: 10px;
             line-height: 1.45;
@@ -165,7 +165,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 10.5pt;
+            font-size: 12pt;
         }
 
         .print-checkbox {
@@ -238,7 +238,7 @@
             align-items: baseline;
             gap: 8px;
             margin-top: 4px;
-            font-size: 10.5pt;
+            font-size: 12pt;
         }
 
         .fitb-line {
@@ -250,7 +250,7 @@
 
         /* ── ORDERING ── */
         .ordering-word-list {
-            font-size: 10.5pt;
+            font-size: 12pt;
             font-weight: 700;
             color: #374151;
             margin-bottom: 14px;
@@ -295,10 +295,9 @@
 
         /* ── PRINT OVERRIDES ── */
         @media print {
-            body { font-size: 10.5pt; }
+            body { font-size: 12pt; background: #fff; }
             .print-image { max-height: 180px; }
             a { text-decoration: none; color: inherit; }
-            body { background: #fff; }
             .container { padding: 0; max-width: 100%; }
         }
     </style>

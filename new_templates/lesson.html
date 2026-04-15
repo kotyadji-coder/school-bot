@@ -117,7 +117,6 @@
             font-size: 1.15rem;
             line-height: 1.8;
             color: var(--text-dark);
-            /* scroll-in starting state */
             opacity: 0;
             transform: translateY(30px);
             transition: opacity 0.55s ease, transform 0.55s ease,
@@ -141,20 +140,40 @@
 
         .story-text { flex: 1; min-width: 0; }
 
-        /* revealed by Intersection Observer */
         .story-block.visible {
             opacity: 1;
             transform: translateY(0);
         }
 
-        /* hover keeps working after reveal */
         .story-block.visible:hover {
             transform: translateY(-2px);
             box-shadow: 0 12px 40px rgba(99, 102, 241, 0.18);
         }
 
+        /* ── THEORY BREAK (image + motivational text between theory and tasks) ── */
+        .theory-break {
+            margin: 8px 0 40px;
+            text-align: center;
+        }
+
+        .theory-image {
+            width: 100%;
+            max-height: 280px;
+            object-fit: cover;
+            border-radius: var(--radius);
+            display: block;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.14);
+        }
+
+        .theory-break-text {
+            margin-top: 18px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--accent);
+        }
+
         /* ── TASKS SECTION ── */
-        .tasks-section { margin-top: 40px; }
+        .tasks-section { margin-top: 0; }
 
         .tasks-heading {
             font-size: 1.4rem;
@@ -325,6 +344,7 @@
             user-select: none;
             transition: border-color 0.15s, transform 0.15s, opacity 0.15s;
             box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            touch-action: none;
         }
         .drag-item:hover  { border-color: var(--accent); transform: translateY(-2px); }
         .drag-item.dragging { opacity: 0.35; cursor: grabbing; }
@@ -416,6 +436,7 @@
             user-select: none;
             transition: all 0.15s;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            touch-action: none;
         }
         .ordering-item:hover    { border-color: rgba(99,102,241,0.42); }
         .ordering-item.dragging { opacity: 0.32; cursor: grabbing; }
@@ -507,6 +528,7 @@
             .drop-zones      { flex-direction: column; }
             .fitb-row        { flex-direction: column; align-items: stretch; }
             .fitb-row .check-btn { align-self: flex-start; }
+            .theory-image    { max-height: 180px; }
         }
 
         @media (min-width: 900px) {
@@ -533,6 +555,11 @@
     </div>
     {% endfor %}
 
+    <div class="theory-break">
+        <img class="theory-image" src="{{ bg_image_url }}" alt="{{ title }}">
+        <p class="theory-break-text">Отличная работа! Теория прочитана. Вперед к миссиям!</p>
+    </div>
+
     {% if tasks %}
     <div class="tasks-section">
         <h2 class="tasks-heading">Задания</h2>
@@ -544,7 +571,7 @@
                 <span class="task-num">{{ loop.index }}</span>
                 <span class="task-type-label task-type-{{ task.type }}">
                     {%- if task.type == 'quiz' -%}Выбери ответ
-                    {%- elif task.type == 'multiple_choice' -%}Несколько верных
+                    {%- elif task.type == 'multiple_choice' -%}Выбери несколько верных ответов
                     {%- elif task.type == 'drag_and_drop' -%}Перетащи
                     {%- elif task.type == 'fill_in_the_blank' -%}Заполни пропуск
                     {%- elif task.type == 'ordering' -%}Расставь по порядку
@@ -633,7 +660,7 @@
                 onclick="var w=window.open('{{ print_url }}'); w.addEventListener('load', function(){ w.print(); });">
             🖨 Распечатать
         </button>
-        <a class="footer-btn footer-btn-primary" href="https://t.me/YOUR_BOT_USERNAME">
+        <a class="footer-btn footer-btn-primary" href="https://edtale.ru/">
             ✨ Создать урок
         </a>
     </div>
@@ -650,7 +677,7 @@
             entries.forEach(function (entry) {
                 if (entry.isIntersecting) {
                     entry.target.classList.add('visible');
-                    observer.unobserve(entry.target); // animate once
+                    observer.unobserve(entry.target);
                 }
             });
         }, { threshold: 0.12 });
@@ -666,12 +693,46 @@ document.addEventListener('DOMContentLoaded', function () {
         el.className = 'task-feedback visible ' + (text.startsWith('✓') ? 'success' : 'error');
     }
 
+    // Creates a floating clone that follows the finger/cursor during drag
+    function makeFloatingClone(source, touch) {
+        var rect = source.getBoundingClientRect();
+        var clone = source.cloneNode(true);
+        clone.style.cssText = [
+            'position:fixed', 'pointer-events:none', 'z-index:9999', 'margin:0',
+            'opacity:0.9', 'width:' + rect.width + 'px',
+            'left:' + rect.left + 'px', 'top:' + rect.top + 'px'
+        ].join(';');
+        document.body.appendChild(clone);
+        return {
+            el: clone,
+            offX: touch.clientX - rect.left,
+            offY: touch.clientY - rect.top
+        };
+    }
+
+    function moveClone(ghost, touch) {
+        ghost.el.style.left = (touch.clientX - ghost.offX) + 'px';
+        ghost.el.style.top  = (touch.clientY - ghost.offY) + 'px';
+    }
+
+    function removeClone(ghost) {
+        if (ghost.el.parentNode) ghost.el.parentNode.removeChild(ghost.el);
+    }
+
+    // Temporarily hides the clone and uses elementFromPoint to find target
+    function elementUnderTouch(ghost, touch) {
+        ghost.el.style.visibility = 'hidden';
+        var el = document.elementFromPoint(touch.clientX, touch.clientY);
+        ghost.el.style.visibility = '';
+        return el;
+    }
+
     // ── COMPLETION TRACKER ───────────────────────────────────────────────────
     var totalTasks = document.querySelectorAll('.task-card').length;
     var solvedCount = 0;
 
     function onTaskSolved(card) {
-        if (card.dataset.solved === 'true') return;  // don't count twice
+        if (card.dataset.solved === 'true') return;
         card.dataset.solved = 'true';
         solvedCount++;
         if (solvedCount >= totalTasks && totalTasks > 0) {
@@ -744,7 +805,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 showFeedback(feedback, '✓ Всё верно!');
                 onTaskSolved(card);
             } else {
-                // No answers revealed — child adjusts and tries again
                 showFeedback(feedback, '✗ Не все ответы верны. Попробуй ещё раз!');
             }
         });
@@ -752,9 +812,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ── 3. DRAG AND DROP ────────────────────────────────────────────────────
     document.querySelectorAll('.task-drag_and_drop').forEach(function (card) {
-        var wrapper  = card.querySelector('.dnd-wrapper');
-        var correct  = JSON.parse(wrapper.dataset.correct);
-        var pool     = wrapper.querySelector('.drag-pool');
+        var wrapper   = card.querySelector('.dnd-wrapper');
+        var correct   = JSON.parse(wrapper.dataset.correct);
+        var pool      = wrapper.querySelector('.drag-pool');
         var draggedEl = null;
 
         function evaluateZone(zone) {
@@ -769,29 +829,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
         function checkAllMatched() {
             var zones = Array.from(wrapper.querySelectorAll('.drop-zone'));
-            var allDone = zones.length > 0 && zones.every(function (z) {
+            // All zones matched AND no items left in the pool
+            var allZonesMatched = zones.length > 0 && zones.every(function (z) {
                 return z.classList.contains('matched');
             });
-            if (allDone) onTaskSolved(card);
+            var poolEmpty = pool.querySelectorAll('.drag-item').length === 0;
+            if (allZonesMatched && poolEmpty) onTaskSolved(card);
         }
 
+        // ── Mouse drag ──
         function attachDrag(item) {
             item.addEventListener('dragstart', function (e) {
                 draggedEl = item;
                 e.dataTransfer.setData('text/plain', item.dataset.item);
                 e.dataTransfer.effectAllowed = 'move';
-
-                // Custom ghost: prevents browser from compositing the real element
-                // (which breaks backdrop-filter / fixed background layers)
                 var ghost = document.createElement('div');
                 ghost.textContent = item.textContent;
-                ghost.style.cssText = [
-                    'position:absolute', 'top:-9999px', 'left:-9999px',
-                    'padding:8px 20px', 'border-radius:50px',
-                    'background:#6366f1', 'color:#fff',
-                    'font-weight:800', 'font-size:1rem',
-                    'font-family:Nunito,sans-serif', 'white-space:nowrap'
-                ].join(';');
+                ghost.style.cssText = 'position:absolute;top:-9999px;left:-9999px;padding:8px 20px;border-radius:50px;background:#6366f1;color:#fff;font-weight:800;font-size:1rem;font-family:Nunito,sans-serif;white-space:nowrap';
                 document.body.appendChild(ghost);
                 e.dataTransfer.setDragImage(ghost, ghost.offsetWidth / 2, 20);
                 setTimeout(function () {
@@ -801,35 +855,94 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             item.addEventListener('dragend', function () {
                 item.classList.remove('dragging');
+                draggedEl = null;
             });
         }
 
-        wrapper.querySelectorAll('.drag-item').forEach(attachDrag);
+        // ── Touch drag ──
+        function attachTouchDrag(item) {
+            var ghost = null;
 
-        // Drop back to pool
+            item.addEventListener('touchstart', function (e) {
+                if (e.touches.length !== 1) return;
+                ghost = makeFloatingClone(item, e.touches[0]);
+                item.classList.add('dragging');
+            }, { passive: true });
+
+            item.addEventListener('touchmove', function (e) {
+                e.preventDefault();
+                if (!ghost) return;
+                moveClone(ghost, e.touches[0]);
+                var el = elementUnderTouch(ghost, e.touches[0]);
+                var hoverZone = el ? el.closest('.drop-zone') : null;
+                wrapper.querySelectorAll('.drop-zone').forEach(function (z) {
+                    z.classList.toggle('drag-over', z === hoverZone);
+                });
+            }, { passive: false });
+
+            function finishTouch(e) {
+                if (!ghost) return;
+                var touch = e.changedTouches[0];
+                var el = elementUnderTouch(ghost, touch);
+                removeClone(ghost);
+                ghost = null;
+                item.classList.remove('dragging');
+                wrapper.querySelectorAll('.drop-zone').forEach(function (z) {
+                    z.classList.remove('drag-over');
+                });
+
+                var zone     = el ? el.closest('.drop-zone') : null;
+                var fromZone = item.closest('.drop-zone');
+
+                if (zone) {
+                    var slot     = zone.querySelector('.zone-slot');
+                    var existing = slot.querySelector('.drag-item');
+                    if (existing && existing !== item) pool.appendChild(existing);
+                    if (fromZone && fromZone !== zone) fromZone.classList.remove('matched', 'wrong-match');
+                    slot.appendChild(item);
+                    evaluateZone(zone);
+                    if (fromZone && fromZone !== zone) evaluateZone(fromZone);
+                    checkAllMatched();
+                } else {
+                    if (fromZone) fromZone.classList.remove('matched', 'wrong-match');
+                    pool.appendChild(item);
+                    if (fromZone) evaluateZone(fromZone);
+                }
+            }
+
+            item.addEventListener('touchend',   finishTouch, { passive: false });
+            item.addEventListener('touchcancel', function () {
+                if (ghost) { removeClone(ghost); ghost = null; }
+                item.classList.remove('dragging');
+                wrapper.querySelectorAll('.drop-zone').forEach(function (z) { z.classList.remove('drag-over'); });
+            }, { passive: true });
+        }
+
+        wrapper.querySelectorAll('.drag-item').forEach(function (item) {
+            attachDrag(item);
+            attachTouchDrag(item);
+        });
+
+        // Mouse: drop back to pool
         pool.addEventListener('dragover', function (e) { e.preventDefault(); });
         pool.addEventListener('drop', function (e) {
             e.preventDefault();
             if (!draggedEl) return;
             var fromZone = draggedEl.closest('.drop-zone');
             pool.appendChild(draggedEl);
-            if (fromZone) evaluateZone(fromZone);
+            if (fromZone) { fromZone.classList.remove('matched', 'wrong-match'); evaluateZone(fromZone); }
             draggedEl = null;
         });
 
-        // Drop onto zones
+        // Mouse: drop onto zones
         wrapper.querySelectorAll('.drop-zone').forEach(function (zone) {
             zone.addEventListener('dragover', function (e) {
                 e.preventDefault();
                 zone.classList.add('drag-over');
             });
-
             zone.addEventListener('dragleave', function (e) {
-                if (!zone.contains(e.relatedTarget)) {
-                    zone.classList.remove('drag-over');
-                }
+                if (!zone.contains(e.relatedTarget)) zone.classList.remove('drag-over');
             });
-
             zone.addEventListener('drop', function (e) {
                 e.preventDefault();
                 zone.classList.remove('drag-over');
@@ -840,12 +953,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 var fromZone = draggedEl.closest('.drop-zone');
 
                 if (existing && existing !== draggedEl) pool.appendChild(existing);
-                if (fromZone && fromZone !== zone) {
-                    fromZone.classList.remove('matched', 'wrong-match');
-                }
+                if (fromZone && fromZone !== zone) fromZone.classList.remove('matched', 'wrong-match');
 
                 slot.appendChild(draggedEl);
                 evaluateZone(zone);
+                if (fromZone && fromZone !== zone) evaluateZone(fromZone);
                 checkAllMatched();
                 draggedEl = null;
             });
@@ -885,20 +997,18 @@ document.addEventListener('DOMContentLoaded', function () {
         var draggedItem  = null;
 
         list.querySelectorAll('.ordering-item').forEach(function (item) {
+
+            // ── Mouse drag ──
             item.addEventListener('dragstart', function (e) {
                 draggedItem = item;
                 item.classList.add('dragging');
                 e.dataTransfer.effectAllowed = 'move';
             });
-
             item.addEventListener('dragend', function () {
                 item.classList.remove('dragging');
-                list.querySelectorAll('.ordering-item').forEach(function (i) {
-                    i.classList.remove('drag-over');
-                });
+                list.querySelectorAll('.ordering-item').forEach(function (i) { i.classList.remove('drag-over'); });
                 draggedItem = null;
             });
-
             item.addEventListener('dragover', function (e) {
                 e.preventDefault();
                 if (!draggedItem || item === draggedItem) return;
@@ -910,10 +1020,58 @@ document.addEventListener('DOMContentLoaded', function () {
                     list.insertBefore(draggedItem, item.nextSibling);
                 }
             });
+            item.addEventListener('dragleave', function () { item.classList.remove('drag-over'); });
 
-            item.addEventListener('dragleave', function () {
-                item.classList.remove('drag-over');
-            });
+            // ── Touch drag ──
+            var tGhost = null;
+
+            item.addEventListener('touchstart', function (e) {
+                if (e.touches.length !== 1) return;
+                tGhost = makeFloatingClone(item, e.touches[0]);
+                draggedItem = item;
+                item.classList.add('dragging');
+            }, { passive: true });
+
+            item.addEventListener('touchmove', function (e) {
+                e.preventDefault();
+                if (!tGhost || !draggedItem) return;
+                moveClone(tGhost, e.touches[0]);
+                var el     = elementUnderTouch(tGhost, e.touches[0]);
+                var target = el ? el.closest('.ordering-item') : null;
+                list.querySelectorAll('.ordering-item').forEach(function (i) {
+                    i.classList.toggle('drag-over', i === target && i !== draggedItem);
+                });
+            }, { passive: false });
+
+            item.addEventListener('touchend', function (e) {
+                if (!tGhost) return;
+                var touch  = e.changedTouches[0];
+                var el     = elementUnderTouch(tGhost, touch);
+                removeClone(tGhost);
+                tGhost = null;
+
+                if (draggedItem) {
+                    draggedItem.classList.remove('dragging');
+                    list.querySelectorAll('.ordering-item').forEach(function (i) { i.classList.remove('drag-over'); });
+                }
+
+                var target = el ? el.closest('.ordering-item') : null;
+                if (target && target !== draggedItem && draggedItem) {
+                    var rect = target.getBoundingClientRect();
+                    if (touch.clientY < rect.top + rect.height / 2) {
+                        list.insertBefore(draggedItem, target);
+                    } else {
+                        list.insertBefore(draggedItem, target.nextSibling);
+                    }
+                }
+                draggedItem = null;
+            }, { passive: false });
+
+            item.addEventListener('touchcancel', function () {
+                if (tGhost) { removeClone(tGhost); tGhost = null; }
+                if (draggedItem) { draggedItem.classList.remove('dragging'); draggedItem = null; }
+                list.querySelectorAll('.ordering-item').forEach(function (i) { i.classList.remove('drag-over'); });
+            }, { passive: true });
         });
 
         card.querySelector('.ordering-check').addEventListener('click', function () {
@@ -924,9 +1082,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                   return i.querySelector('.item-text').textContent.trim();
                               });
 
-            var isCorrect = current.every(function (val, idx) {
-                return val === correctOrder[idx];
-            });
+            var isCorrect = current.every(function (val, idx) { return val === correctOrder[idx]; });
 
             if (isCorrect) {
                 list.querySelectorAll('.ordering-item').forEach(function (item) {
