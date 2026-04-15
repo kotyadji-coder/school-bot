@@ -289,18 +289,20 @@
 
         /* ── PRINT BUTTON BAR (screen only) ── */
         .print-btn-bar {
-            text-align: center;
-            padding: 20px 0 28px;
+            display: flex;
+            justify-content: center;
+            padding: 16px 0 0;
+            margin-bottom: 2rem;
         }
 
         .print-btn {
             background: #6366f1;
             color: #fff;
             border: none;
-            padding: 13px 36px;
+            padding: 9px 24px;
             border-radius: 50px;
             font-family: 'Nunito', sans-serif;
-            font-size: 14pt;
+            font-size: 11pt;
             font-weight: 800;
             cursor: pointer;
             box-shadow: 0 4px 14px rgba(99,102,241,0.35);
@@ -491,27 +493,14 @@
 (function () {
     var ua = navigator.userAgent || '';
 
-    // Signal 1: Telegram's official JS API (most reliable)
-    var isTelegramAPI = !!(window.Telegram && window.Telegram.WebApp);
-
-    // Signal 2: UA explicitly contains "Telegram"
-    var isTelegramUA = /Telegram/i.test(ua);
-
-    // Signal 3: Android in-app WebView flag ("wv" token in UA)
-    var isAndroidWebView = /Android/i.test(ua) && /\bwv\b/.test(ua);
-
-    // Signal 4: iOS in-app browser — has WebKit but NO "Safari/" token.
-    // Regular iOS Safari ends with "...Mobile/15E148 Safari/604.1" — the slash is the key.
-    // WKWebView inside apps (including Telegram iOS) does NOT include "Safari/".
-    var isIOSInApp = /iPhone|iPad|iPod/i.test(ua) && !/Safari\//i.test(ua) && /AppleWebKit/i.test(ua);
-
-    var isWebView = isTelegramAPI || isTelegramUA || isAndroidWebView || isIOSInApp;
+    // If the UA contains "Telegram" it is always Telegram's in-app browser
+    var isWebView = /Telegram/i.test(ua);
 
     var banner = document.getElementById('tgBanner');
     var btnBar = document.getElementById('printBtnBar');
 
     if (isWebView) {
-        // Restricted in-app browser — hide print button, show instruction banner
+        // Telegram in-app browser — hide print button, show instruction banner
         banner.style.display = 'block';
         btnBar.style.display  = 'none';
     } else {

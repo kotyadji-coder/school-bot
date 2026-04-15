@@ -29,6 +29,8 @@ def _clean_methodologist_notes(text: str) -> str:
     text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
     # Strip remaining lone asterisks
     text = text.replace('*', '')
+    # Split "Предмет: ... Тема:" onto separate lines when on the same line
+    text = re.sub(r'(Предмет:[^\n]+?\.)\s+(Тема:)', r'\1\n\n\2', text)
     # Ensure a blank line before each numbered section header (e.g. "1. " or "2. ")
     text = re.sub(r'(\n)(\d+\. )', r'\n\n\2', text)
     # Normalize: collapse 3+ consecutive newlines to exactly 2 (done last to catch any doubling above)
