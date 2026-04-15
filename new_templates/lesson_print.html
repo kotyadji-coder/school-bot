@@ -13,7 +13,7 @@
         /* ── PAGE SIZE ── */
         @page {
             size: A4 portrait;
-            margin: 2cm;
+            margin: 0; /* margins enforced via body padding in @media print */
         }
 
         /* ── BASE ── */
@@ -287,6 +287,78 @@
             border-radius: 5px;
         }
 
+        /* ── PRINT BUTTON BAR (screen only) ── */
+        .print-btn-bar {
+            text-align: center;
+            padding: 20px 0 28px;
+        }
+
+        .print-btn {
+            background: #6366f1;
+            color: #fff;
+            border: none;
+            padding: 13px 36px;
+            border-radius: 50px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 14pt;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(99,102,241,0.35);
+            letter-spacing: 0.02em;
+        }
+
+        .print-btn:hover { background: #4f46e5; }
+
+        /* Telegram warning overlay */
+        .tg-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .tg-overlay.visible { display: flex; }
+
+        .tg-box {
+            background: #fff;
+            border-radius: 16px;
+            padding: 28px 24px;
+            max-width: 360px;
+            text-align: center;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        .tg-icon { font-size: 42px; margin-bottom: 12px; }
+
+        .tg-title {
+            font-size: 16pt;
+            font-weight: 900;
+            color: #111827;
+            margin-bottom: 10px;
+        }
+
+        .tg-body {
+            font-size: 11pt;
+            color: #374151;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .tg-close {
+            background: #6366f1;
+            color: #fff;
+            border: none;
+            padding: 10px 28px;
+            border-radius: 50px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 11pt;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
         /* ── FOOTER ── */
         .print-footer {
             margin-top: 28px;
@@ -299,15 +371,37 @@
 
         /* ── PRINT OVERRIDES ── */
         @media print {
-            body { font-size: 12pt; background: #fff; }
+            /* 2cm padding on body = guaranteed physical margins, cross-browser */
+            body { font-size: 12pt; background: #fff; padding: 2cm; }
             .print-image { max-width: 50%; max-height: none; object-fit: contain; margin: 0 auto 20px; }
             a { text-decoration: none; color: inherit; }
             .container { padding: 0; max-width: 100%; }
+            /* hide interactive UI */
+            .print-btn-bar { display: none; }
+            .tg-overlay { display: none !important; }
         }
     </style>
 </head>
 <body>
+<!-- Telegram "open in browser" overlay -->
+<div class="tg-overlay" id="tgOverlay">
+    <div class="tg-box">
+        <div class="tg-icon">🖨️</div>
+        <div class="tg-title">Откройте в браузере</div>
+        <div class="tg-body">
+            Печать недоступна во встроенном браузере Telegram.<br><br>
+            Нажмите <strong>⋯ → Открыть в браузере</strong> (Safari или Chrome), а затем нажмите «Распечатать».
+        </div>
+        <button class="tg-close" onclick="document.getElementById('tgOverlay').classList.remove('visible')">Понятно</button>
+    </div>
+</div>
+
 <div class="container">
+
+    <!-- PRINT BUTTON -->
+    <div class="print-btn-bar">
+        <button class="print-btn" onclick="handlePrint()">🖨️&nbsp; Распечатать</button>
+    </div>
 
     <!-- HEADER -->
     <div class="print-header">
@@ -423,5 +517,18 @@
     </div>
 
 </div>
+
+<script>
+function handlePrint() {
+    var ua = navigator.userAgent || '';
+    // Telegram in-app browser includes "Telegram" in the UA on most platforms
+    var isTelegram = /Telegram/i.test(ua);
+    if (isTelegram) {
+        document.getElementById('tgOverlay').classList.add('visible');
+    } else {
+        window.print();
+    }
+}
+</script>
 </body>
 </html>
