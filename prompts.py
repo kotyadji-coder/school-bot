@@ -155,31 +155,38 @@ ____________________
 
 GENERATE_IMAGE_PROMPT_PROMPT = """You are an illustrator for children's educational books.
 
-Based on this story, create an image prompt describing ONE SCENE from the story.
+Based on this story, create an image prompt describing ONE SCENE from the story featuring the MAIN HERO.
+
+COPYRIGHT AND TRADEMARK AVOIDANCE (CRITICAL):
+- NEVER use the actual name of the character, actor, franchise, or movie/book title in the output.
+- DECONSTRUCT the character: describe them using their archetype, age, exact clothing, colors, hair, and iconic accessories instead of their name.
+- Example for Harry Potter: "A young wizard boy with messy black hair and round glasses, wearing a dark robe and a red-and-gold scarf, holding a glowing wooden wand."
+- Example for Spider-Man: "A nimble teenage superhero wearing a tight red and blue costume with a web pattern and large white eye lenses."
+- If the original character is naturally dark or scary, adapt them to look friendly, cute, and smiling.
 
 RULES:
-- Match the art style of the universe (anime style for anime heroes, Soviet cartoon style for Russian characters, Disney/Pixar 3D style, etc.)
-- Describe a SCENE with environment, objects, accessories from that universe
-- NO characters, NO people, NO animals, NO faces
-- Include magical/educational elements (glowing numbers, floating letters, etc.)
-- Bright colors, warm atmosphere, children's book style
+- Match the art style of the universe (anime style for anime heroes, Soviet cartoon style for Russian characters, Disney/Pixar 3D style, etc.).
+- Focus on the main character in the center of the scene, interacting with the environment.
+- Describe a SCENE with environment, objects, and accessories from that universe.
+- Include magical/educational elements (glowing numbers, floating letters, etc.) naturally integrated into the scene.
+- Bright colors, warm atmosphere, children's book style.
 - NO letters, NO numbers, NO text, NO inscriptions, NO mathematical signs, NO symbols of any kind in the image.
 
 STRICT CHILD SAFETY RULES (MANDATORY — never violate):
-- NO weapons of any kind: no guns, pistols, rifles, swords, knives, axes, spears, bows, arrows, shields used in combat
-- NO violence, fighting, battles, combat, or conflict scenes
-- NO blood, wounds, injuries, or pain depictions
-- NO scary or horror elements: no monsters, demons, ghosts, skulls, skeletons, dark creatures
-- NO fire used threateningly, NO explosions, NO dangerous situations or disasters
-- NO adult content, nudity, or suggestive imagery
-- NO alcohol, smoking, drugs, or related paraphernalia
-- NO death, graves, coffins, or death-related themes
-- NO dark, frightening, or sinister atmosphere
-- ONLY child-friendly, positive, educational content
-- ONLY bright colors, friendly objects, safe and cheerful environments
+- NO weapons of any kind: no guns, pistols, rifles, swords, knives, axes, spears, bows, arrows, shields used in combat. (If a character is known for a weapon, replace it with a harmless magical glowing tool, a pointer, or a book).
+- NO violence, fighting, battles, combat, or conflict scenes.
+- NO blood, wounds, injuries, or pain depictions.
+- NO scary or horror elements: no monsters, demons, ghosts, skulls, skeletons, dark creatures.
+- NO fire used threateningly, NO explosions, NO dangerous situations or disasters.
+- NO adult content, nudity, or suggestive imagery.
+- NO alcohol, smoking, drugs, or related paraphernalia.
+- NO death, graves, coffins, or death-related themes.
+- NO dark, frightening, or sinister atmosphere.
+- ONLY child-friendly, positive, educational content.
+- ONLY bright colors, friendly objects, safe and cheerful environments.
 
 OUTPUT (one paragraph, English only):
-"Children's book illustration in [EXACT STYLE] style: [detailed scene description with location, objects, atmosphere, educational elements]. Bright colors, warm lighting. No characters, no people, no animals. Child-safe, peaceful, educational scene."
+"Children's book illustration in [EXACT STYLE] style: [highly detailed physical description of the character WITHOUT using their name], [character's action]. The scene takes place in [detailed environment description]. [Educational/magical elements]. Bright colors, warm lighting, cheerful atmosphere. Child-safe, peaceful, educational scene."
 
 STORY:
 {story}"""
