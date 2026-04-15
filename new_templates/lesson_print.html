@@ -58,11 +58,11 @@
 
         /* ── HERO IMAGE ── */
         .print-image {
-            width: 100%;
-            max-height: 200px;
-            object-fit: cover;
+            max-width: 50%;
+            height: auto;
+            object-fit: contain;
             border-radius: 10px;
-            margin-bottom: 24px;
+            margin: 0 auto 24px;
             display: block;
         }
 
@@ -108,7 +108,11 @@
         }
 
         /* ── TASKS SECTION ── */
-        .tasks-section { margin-top: 8px; }
+        .tasks-section {
+            margin-top: 8px;
+            page-break-before: always;
+            break-before: page;
+        }
 
         .task-card {
             border: 1.5px solid #d1d5db;
@@ -296,7 +300,7 @@
         /* ── PRINT OVERRIDES ── */
         @media print {
             body { font-size: 12pt; background: #fff; }
-            .print-image { max-height: 180px; }
+            .print-image { max-width: 50%; max-height: none; object-fit: contain; margin: 0 auto 20px; }
             a { text-decoration: none; color: inherit; }
             .container { padding: 0; max-width: 100%; }
         }

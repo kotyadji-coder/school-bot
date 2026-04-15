@@ -28,6 +28,7 @@ def send_message(
     channel_id: str | None = None,
     web_url: str | None = None,
     print_url: str | None = None,
+    methodologist_notes: str | None = None,
 ) -> None:
     """Отправляет финальное сообщение пользователю через SmartBot Pro."""
     resolved_channel_id = channel_id or DEFAULT_CHANNEL_ID
@@ -35,14 +36,16 @@ def send_message(
     block_id = config["block_error"] if status == "error" else config["block_success"]
     logger.warning("SmartBot routing: channel_id=%s status=%s block_id=%s", resolved_channel_id, status, block_id)
     if web_url:
+        notes_block = f"\n\n💡 Рекомендации методиста для родителей:\n{methodologist_notes}" if methodologist_notes else ""
         text = (
-            f"🌟 Урок готов!\n"
-            f"💻 Интерактивный урок: {web_url}\n"
+            f"🌟 Урок готов!\n\n"
+            f"💻 Интерактивный урок: {web_url}\n\n"
             f"🖨 Версия для печати: {print_url}\n\n"
             f"Что внутри:\n"
-            f"• Объяснение в стиле любимого героя\n"
-            f"• Задания-миссии\n"
-            f"• Рекомендации методиста для родителей"
+            f"• Урок в стиле любимого героя\n"
+            f"• Миссии (задания)\n\n"
+            f"Вы можете распечатать урок или дать ребенку работать на планшете/компьютере."
+            f"{notes_block}"
         )
         data = {"Messagetext": text}
     else:

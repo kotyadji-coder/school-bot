@@ -159,7 +159,7 @@ def _generate_and_send(user_id: str, question: str, channel_id: str, callback_ur
         print_url = f"{SERVER_URL}/e/{content_id}_print"
 
         try:
-            send_message(peer_id=user_id, status="success", channel_id=channel_id, web_url=web_url, print_url=print_url)
+            send_message(peer_id=user_id, status="success", channel_id=channel_id, web_url=web_url, print_url=print_url, methodologist_notes=methodologist_output)
             db_logger.log("INFO", "CALLBACK_SENT", f"Ответ отправлен в SmartBot, content_id={content_id}", user_id=user_id, channel_id=channel_id)
         except Exception as cb_err:
             db_logger.log("ERROR", "CALLBACK_ERROR", f"Ошибка отправки в SmartBot: {cb_err}", user_id=user_id, channel_id=channel_id)
