@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 
 import httpx
 
@@ -22,6 +23,19 @@ DEFAULT_CHANNEL_ID = os.getenv("SMARTBOT_TG_CHANNEL_ID", "")
 logger = logging.getLogger("school-bot")
 
 
+def _clean_methodologist_notes(text: str) -> str:
+    """Remove markdown bolding and normalize paragraph breaks for plain-text Telegram."""
+    # Strip **bold** markers
+    text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
+    # Strip remaining lone asterisks
+    text = text.replace('*', '')
+    # Normalize: collapse 3+ consecutive newlines to 2
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    # Ensure a blank line after each numbered section header (e.g. "1. " or "2. ")
+    text = re.sub(r'(\n)(\d+\. )', r'\n\n\2', text)
+    return text.strip()
+
+
 def send_message(
     peer_id: str,
     status: str = "success",
@@ -36,7 +50,8 @@ def send_message(
     block_id = config["block_error"] if status == "error" else config["block_success"]
     logger.warning("SmartBot routing: channel_id=%s status=%s block_id=%s", resolved_channel_id, status, block_id)
     if web_url:
-        notes_block = f"\n\n💡 Рекомендации методиста для родителей:\n{methodologist_notes}" if methodologist_notes else ""
+        cleaned_notes = _clean_methodologist_notes(methodologist_notes) if methodologist_notes else None
+        notes_block = f"\n\n💡 Рекомендации методиста для родителей:\n\n{cleaned_notes}" if cleaned_notes else ""
         text = (
             f"🌟 Урок готов!\n\n"
             f"💻 Интерактивный урок: {web_url}\n\n"
