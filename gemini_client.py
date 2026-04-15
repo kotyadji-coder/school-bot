@@ -1,9 +1,16 @@
+import json
 import os
+import re
 
 import vertexai
-from vertexai.generative_models import GenerativeModel, HarmBlockThreshold, HarmCategory, SafetySetting
+from vertexai.generative_models import GenerationConfig, GenerativeModel, HarmBlockThreshold, HarmCategory, SafetySetting
 
-from prompts import GENERATE_IMAGE_PROMPT_FALLBACK_PROMPT, GENERATE_IMAGE_PROMPT_PROMPT, METHODOLOGIST_PROMPT, TUTOR_GAMER_PROMPT
+from prompts import (
+    GENERATE_IMAGE_PROMPT_FALLBACK_PROMPT,
+    GENERATE_IMAGE_PROMPT_PROMPT,
+    METHODOLOGIST_PROMPT,
+    TUTOR_GAMER_JSON_PROMPT,
+)
 
 PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
 REGION = "global"
@@ -40,41 +47,45 @@ def _get_model() -> GenerativeModel:
     return GenerativeModel(MODEL_NAME)
 
 
-def generate_explanation(question: str) -> tuple[str, str]:
+def _extract_json(raw: str) -> dict:
+    """Strip markdown fences and extract the JSON object from the model response."""
+    cleaned = re.sub(r"^```(?:json)?\s*", "", raw.strip(), flags=re.MULTILINE)
+    cleaned = re.sub(r"```\s*$", "", cleaned.strip(), flags=re.MULTILINE)
+    cleaned = cleaned.strip()
+    match = re.search(r"\{.*\}", cleaned, re.DOTALL)
+    if match:
+        cleaned = match.group(0)
+    return json.loads(cleaned)
+
+
+def generate_explanation(question: str) -> tuple[str, dict]:
     """
     Two-step chain:
-      Step 1 — Methodologist: structured, factually accurate explanation.
-      Step 2 — Tutor-Gamer: transforms Step 1 into a fun character-based story.
+      Step 1 — Methodologist: structured rule + mnemonic.
+      Step 2 — Tutor-Gamer: returns strict JSON lesson with story_blocks + 5 tasks.
 
-    Returns (methodologist_output, final_output).
+    Returns (methodologist_output, lesson_dict).
     """
     model = _get_model()
 
-    # Step 1: methodologist
+    # Step 1: methodologist (plain text)
     step1_prompt = METHODOLOGIST_PROMPT.format(question=question)
     step1_response = model.generate_content(step1_prompt, safety_settings=CHILD_SAFETY_SETTINGS)
     methodologist_output = step1_response.text.strip()
 
-    # Step 2: tutor-gamer receives original question + Step 1 output
-    step2_prompt = TUTOR_GAMER_PROMPT.format(
+    # Step 2: tutor-gamer → strict JSON
+    step2_prompt = TUTOR_GAMER_JSON_PROMPT.format(
         question=question,
         methodologist_output=methodologist_output,
     )
-    step2_response = model.generate_content(step2_prompt, safety_settings=CHILD_SAFETY_SETTINGS)
-    final_output = step2_response.text.strip()
+    step2_response = model.generate_content(
+        step2_prompt,
+        generation_config=GenerationConfig(response_mime_type="application/json"),
+        safety_settings=CHILD_SAFETY_SETTINGS,
+    )
+    lesson_dict = _extract_json(step2_response.text)
 
-    return methodologist_output, final_output
-
-
-def parse_response(tutor_output: str, methodologist_output: str) -> dict:
-    """
-    Возвращает полный вывод тьютора-геймера как explanation,
-    и вывод методиста как methodologist_notes.
-    """
-    return {
-        "explanation": tutor_output.strip(),
-        "methodologist_notes": methodologist_output.strip(),
-    }
+    return methodologist_output, lesson_dict
 
 
 def generate_image_prompt(explanation: str) -> str:

@@ -17,7 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 import db_logger
-from gemini_client import generate_explanation, generate_image_prompt, generate_image_prompt_fallback, parse_response
+from gemini_client import generate_explanation, generate_image_prompt, generate_image_prompt_fallback
 from image_generator import generate_image
 from smartbot_client import send_message
 from content_generator import save_explanation
@@ -114,16 +114,18 @@ def _generate_and_send(user_id: str, question: str, channel_id: str, callback_ur
             db_logger.log("WARNING", "INPUT_SANITIZED", "Запрос содержал небезопасные ключевые слова — заменены", user_id=user_id, channel_id=channel_id)
         question = sanitized_question
 
-        # 1. Двухшаговая цепочка: методист → тьютор-геймер
+        # 1. Двухшаговая цепочка: методист → тьютор-геймер (JSON)
         db_logger.log("INFO", "STEP1_START", "Шаг 1: методист", user_id=user_id, channel_id=channel_id)
-        methodologist_output, final_output = generate_explanation(question)
+        methodologist_output, lesson_json = generate_explanation(question)
         db_logger.log("INFO", "STEP1_RESULT", methodologist_output[:500], user_id=user_id, channel_id=channel_id)
-        db_logger.log("INFO", "STEP2_RESULT", final_output[:500], user_id=user_id, channel_id=channel_id)
-        parsed = parse_response(final_output, methodologist_output)
+        db_logger.log("INFO", "STEP2_RESULT", lesson_json.get("title", "")[:200], user_id=user_id, channel_id=channel_id)
+
+        # Build plain text from story_blocks for image prompt generation
+        story_text = "\n".join(b["text"] for b in lesson_json.get("story_blocks", []))
 
         # 2. Генерируем изображение
         db_logger.log("INFO", "IMAGE_START", "Генерация изображения начата", user_id=user_id, channel_id=channel_id)
-        img_prompt = generate_image_prompt(parsed["explanation"])
+        img_prompt = generate_image_prompt(story_text)
         db_logger.log("INFO", "IMAGE_PROMPT", img_prompt[:500], user_id=user_id, channel_id=channel_id)
 
         try:
@@ -134,7 +136,7 @@ def _generate_and_send(user_id: str, question: str, channel_id: str, callback_ur
             if "IMAGE_PROHIBITED_CONTENT" in str(img_err):
                 db_logger.log("INFO", "IMAGE_FALLBACK", "Пробуем запасной промт (kids cosplay)", user_id=user_id, channel_id=channel_id)
                 try:
-                    img_prompt_fallback = generate_image_prompt_fallback(parsed["explanation"])
+                    img_prompt_fallback = generate_image_prompt_fallback(story_text)
                     db_logger.log("INFO", "IMAGE_PROMPT_FALLBACK", img_prompt_fallback[:500], user_id=user_id, channel_id=channel_id)
                     image_bytes = generate_image(img_prompt_fallback)
                     db_logger.log("INFO", "IMAGE_DONE", "Изображение сгенерировано (fallback)", user_id=user_id, channel_id=channel_id)
@@ -144,20 +146,20 @@ def _generate_and_send(user_id: str, question: str, channel_id: str, callback_ur
             else:
                 image_bytes = None
 
-        # 3. Сохраняем HTML-страницу
+        # 3. Рендерим и сохраняем HTML-страницы (web + print)
         content_id = save_explanation(
             image_bytes=image_bytes,
-            explanation_text=parsed["explanation"],
+            lesson_json=lesson_json,
             server_url=SERVER_URL,
-            methodologist_notes=parsed["methodologist_notes"],
         )
-        db_logger.log("INFO", "EXPLANATION_DONE", f"Объяснение сохранено: {content_id}", user_id=user_id, channel_id=channel_id)
+        db_logger.log("INFO", "EXPLANATION_DONE", f"Урок сохранён: {content_id}", user_id=user_id, channel_id=channel_id)
 
         # 4. Отправляем через SmartBot
-        lesson_url = f"{SERVER_URL}/e/{content_id}"
+        web_url   = f"{SERVER_URL}/e/{content_id}"
+        print_url = f"{SERVER_URL}/e/{content_id}_print"
 
         try:
-            send_message(peer_id=user_id, status="success", channel_id=channel_id, lesson_url=lesson_url)
+            send_message(peer_id=user_id, status="success", channel_id=channel_id, web_url=web_url, print_url=print_url)
             db_logger.log("INFO", "CALLBACK_SENT", f"Ответ отправлен в SmartBot, content_id={content_id}", user_id=user_id, channel_id=channel_id)
         except Exception as cb_err:
             db_logger.log("ERROR", "CALLBACK_ERROR", f"Ошибка отправки в SmartBot: {cb_err}", user_id=user_id, channel_id=channel_id)

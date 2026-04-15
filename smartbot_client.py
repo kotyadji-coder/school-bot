@@ -22,14 +22,29 @@ DEFAULT_CHANNEL_ID = os.getenv("SMARTBOT_TG_CHANNEL_ID", "")
 logger = logging.getLogger("school-bot")
 
 
-def send_message(peer_id: str, status: str = "success", channel_id: str | None = None, lesson_url: str | None = None) -> None:
+def send_message(
+    peer_id: str,
+    status: str = "success",
+    channel_id: str | None = None,
+    web_url: str | None = None,
+    print_url: str | None = None,
+) -> None:
     """Отправляет финальное сообщение пользователю через SmartBot Pro."""
     resolved_channel_id = channel_id or DEFAULT_CHANNEL_ID
     config = CHANNEL_CONFIGS.get(resolved_channel_id, CHANNEL_CONFIGS[DEFAULT_CHANNEL_ID])
     block_id = config["block_error"] if status == "error" else config["block_success"]
     logger.warning("SmartBot routing: channel_id=%s status=%s block_id=%s", resolved_channel_id, status, block_id)
-    if lesson_url:
-        data = {"Messagetext": f"🌟 Урок готов: {lesson_url}\n\nЧто внутри:\n• Объяснение в стиле любимого героя\n• Задания-миссии\n• Рекомендации методиста для родителей\n\n🖨 Кнопка «Распечатать» внизу страницы"}
+    if web_url:
+        text = (
+            f"🌟 Урок готов!\n"
+            f"💻 Интерактивный урок: {web_url}\n"
+            f"🖨 Версия для печати: {print_url}\n\n"
+            f"Что внутри:\n"
+            f"• Объяснение в стиле любимого героя\n"
+            f"• Задания-миссии\n"
+            f"• Рекомендации методиста для родителей"
+        )
+        data = {"Messagetext": text}
     else:
         data = {}
     payload = {
