@@ -29,10 +29,10 @@ def _clean_methodologist_notes(text: str) -> str:
     text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
     # Strip remaining lone asterisks
     text = text.replace('*', '')
-    # Normalize: collapse 3+ consecutive newlines to 2
-    text = re.sub(r'\n{3,}', '\n\n', text)
-    # Ensure a blank line after each numbered section header (e.g. "1. " or "2. ")
+    # Ensure a blank line before each numbered section header (e.g. "1. " or "2. ")
     text = re.sub(r'(\n)(\d+\. )', r'\n\n\2', text)
+    # Normalize: collapse 3+ consecutive newlines to exactly 2 (done last to catch any doubling above)
+    text = re.sub(r'\n{3,}', '\n\n', text)
     return text.strip()
 
 

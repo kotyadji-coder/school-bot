@@ -309,56 +309,6 @@
 
         .print-btn:hover { background: #4f46e5; }
 
-        /* Telegram warning overlay */
-        .tg-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.55);
-            z-index: 9999;
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
-        }
-        .tg-overlay.visible { display: flex; }
-
-        .tg-box {
-            background: #fff;
-            border-radius: 16px;
-            padding: 28px 24px;
-            max-width: 360px;
-            text-align: center;
-            font-family: 'Nunito', sans-serif;
-        }
-
-        .tg-icon { font-size: 42px; margin-bottom: 12px; }
-
-        .tg-title {
-            font-size: 16pt;
-            font-weight: 900;
-            color: #111827;
-            margin-bottom: 10px;
-        }
-
-        .tg-body {
-            font-size: 11pt;
-            color: #374151;
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-
-        .tg-close {
-            background: #6366f1;
-            color: #fff;
-            border: none;
-            padding: 10px 28px;
-            border-radius: 50px;
-            font-family: 'Nunito', sans-serif;
-            font-size: 11pt;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
         /* ── FOOTER ── */
         .print-footer {
             margin-top: 28px;
@@ -369,37 +319,62 @@
             text-align: center;
         }
 
+        /* ── TELEGRAM BANNER (screen only) ── */
+        .tg-banner {
+            display: none;
+            background: #fffbeb;
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            font-size: 12pt;
+            font-weight: 700;
+            color: #92400e;
+            line-height: 1.55;
+            text-align: center;
+        }
+
         /* ── PRINT OVERRIDES ── */
+        @page {
+            size: A4 portrait;
+            margin: 2cm;
+        }
         @media print {
-            body { font-size: 12pt; background: #fff; padding: 0; }
+            html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #fff !important;
+                font-size: 12pt;
+                width: 100%;
+            }
             .print-image { max-width: 50%; max-height: none; object-fit: contain; margin: 0 auto 20px; }
             a { text-decoration: none; color: inherit; }
-            .container { padding: 0; max-width: 100%; }
+            .container {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                background: #fff !important;
+                box-shadow: none !important;
+            }
             /* hide interactive UI */
-            .print-btn-bar { display: none; }
+            .print-btn-bar { display: none !important; }
             .tg-overlay { display: none !important; }
+            .tg-banner { display: none !important; }
         }
     </style>
 </head>
 <body>
-<!-- Telegram "open in browser" overlay -->
-<div class="tg-overlay" id="tgOverlay">
-    <div class="tg-box">
-        <div class="tg-icon">🖨️</div>
-        <div class="tg-title">Откройте в браузере</div>
-        <div class="tg-body">
-            Печать недоступна во встроенном браузере Telegram.<br><br>
-            Нажмите <strong>⋯ → Открыть в браузере</strong> (Safari или Chrome), а затем нажмите «Распечатать».
-        </div>
-        <button class="tg-close" onclick="document.getElementById('tgOverlay').classList.remove('visible')">Понятно</button>
-    </div>
-</div>
-
 <div class="container">
 
-    <!-- PRINT BUTTON -->
-    <div class="print-btn-bar">
-        <button class="print-btn" onclick="handlePrint()">🖨️&nbsp; Распечатать</button>
+    <!-- TELEGRAM STATIC BANNER (shown instead of print button when in Telegram webview) -->
+    <div class="tg-banner" id="tgBanner">
+        🖨️ Для печати откройте эту страницу в обычном браузере. Нажмите на меню (три точки в правом верхнем углу) и выберите «Открыть в браузере».
+    </div>
+
+    <!-- PRINT BUTTON (hidden in Telegram webview) -->
+    <div class="print-btn-bar" id="printBtnBar">
+        <button class="print-btn" onclick="window.print()">🖨️&nbsp; Распечатать</button>
     </div>
 
     <!-- HEADER -->
@@ -518,16 +493,14 @@
 </div>
 
 <script>
-function handlePrint() {
+(function () {
     var ua = navigator.userAgent || '';
-    // Telegram in-app browser includes "Telegram" in the UA on most platforms
-    var isTelegram = /Telegram/i.test(ua);
-    if (isTelegram) {
-        document.getElementById('tgOverlay').classList.add('visible');
-    } else {
-        window.print();
+    // Telegram in-app browser exposes "Telegram" in the UA on most platforms
+    if (/Telegram/i.test(ua)) {
+        document.getElementById('tgBanner').style.display = 'block';
+        document.getElementById('printBtnBar').style.display = 'none';
     }
-}
+})();
 </script>
 </body>
 </html>
