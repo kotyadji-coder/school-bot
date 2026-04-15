@@ -157,36 +157,71 @@ GENERATE_IMAGE_PROMPT_PROMPT = """You are an illustrator for children's educatio
 
 Based on this story, create an image prompt describing ONE SCENE from the story featuring the MAIN HERO.
 
-COPYRIGHT AND TRADEMARK AVOIDANCE (CRITICAL):
-- NEVER use the actual name of the character, actor, franchise, or movie/book title in the output.
-- DECONSTRUCT the character: describe them using their archetype, age, exact clothing, colors, hair, and iconic accessories instead of their name.
-- Example for Harry Potter: "A young wizard boy with messy black hair and round glasses, wearing a dark robe and a red-and-gold scarf, holding a glowing wooden wand."
-- Example for Spider-Man: "A nimble teenage superhero wearing a tight red and blue costume with a web pattern and large white eye lenses."
-- If the original character is naturally dark or scary, adapt them to look friendly, cute, and smiling.
+You MUST create a "legally distinct" inspired version of the hero.
+- NEVER use the actual character name or franchise name.
+- NEVER use studio names (like Disney, Pixar, Marvel) in your output.
+- Make every hero look like an original mascot created for a generic children's cartoon.
 
-RULES:
-- Match the art style of the universe (anime style for anime heroes, Soviet cartoon style for Russian characters, Disney/Pixar 3D style, etc.).
-- Focus on the main character in the center of the scene, interacting with the environment.
+RULES FOR ART STYLE & SCENE:
+- MATCH the art style of the universe dynamically WITHOUT using brand names:
+  - For Japanese heroes (like ninja/anime): use "High-quality Japanese anime style".
+  - For Russian/Classic fairy tale heroes: use "Classic vintage 2D animation style".
+  - For Western superheroes/modern heroes: use "Vibrant 3D animated cartoon style" or "Bright graphic novel style".
+- Focus on the character in the center of the scene, interacting with the environment.
 - Describe a SCENE with environment, objects, and accessories from that universe.
-- Include magical/educational elements (glowing numbers, floating letters, etc.) naturally integrated into the scene.
+- Include magical/educational elements (glowing 3D geometric shapes, floating colorful books, etc.) naturally integrated.
 - Bright colors, warm atmosphere, children's book style.
 - NO letters, NO numbers, NO text, NO inscriptions, NO mathematical signs, NO symbols of any kind in the image.
 
 STRICT CHILD SAFETY RULES (MANDATORY — never violate):
-- NO weapons of any kind: no guns, pistols, rifles, swords, knives, axes, spears, bows, arrows, shields used in combat. (If a character is known for a weapon, replace it with a harmless magical glowing tool, a pointer, or a book).
+- NO weapons of any kind: no guns, pistols, rifles, swords, knives, axes, spears, bows, arrows, shields used in combat. (Replace weapons with a harmless magical glowing tool, a pointer, or a book).
 - NO violence, fighting, battles, combat, or conflict scenes.
 - NO blood, wounds, injuries, or pain depictions.
 - NO scary or horror elements: no monsters, demons, ghosts, skulls, skeletons, dark creatures.
 - NO fire used threateningly, NO explosions, NO dangerous situations or disasters.
 - NO adult content, nudity, or suggestive imagery.
-- NO alcohol, smoking, drugs, or related paraphernalia.
 - NO death, graves, coffins, or death-related themes.
-- NO dark, frightening, or sinister atmosphere.
 - ONLY child-friendly, positive, educational content.
-- ONLY bright colors, friendly objects, safe and cheerful environments.
 
 OUTPUT (one paragraph, English only):
-"Children's book illustration in [EXACT STYLE] style: [highly detailed physical description of the character WITHOUT using their name], [character's action]. The scene takes place in [detailed environment description]. [Educational/magical elements]. Bright colors, warm lighting, cheerful atmosphere. Child-safe, peaceful, educational scene."
+"Children's book illustration in [INSERT SELECTED BRAND-FREE ART STYLE]: [highly detailed description of a LEGALLY DISTINCT inspired character with altered colors/costume], [character's action]. The scene takes place in [detailed environment description]. [Educational/magical elements]. Bright colors, warm lighting, cheerful atmosphere. No text, no letters. Child-safe, peaceful, educational scene."
+
+STORY:
+{story}"""
+
+# ─── Step 3b: Fallback image prompt (used if Step 3 returns IMAGE_PROHIBITED_CONTENT) ─
+# Same input, "kids cosplay" strategy to avoid copyright blocks
+
+GENERATE_IMAGE_PROMPT_FALLBACK_PROMPT = """You are an illustrator for children's educational books.
+
+Based on this story, create an image prompt describing ONE SCENE from the story using the "KIDS COSPLAY" approach.
+
+THE "KIDS COSPLAY" AVOIDANCE STRATEGY (CRITICAL):
+You MUST NOT describe the actual copyrighted hero. Instead, describe a normal, happy 7-year-old child who is PRETENDING to be the hero using homemade, everyday items.
+- NEVER use the hero's actual name, nor brand names like Marvel, Disney, or Pixar.
+- Example for a Wizard: "A cheerful boy wearing an oversized blanket as a cape, with round wire glasses made of pipe cleaners, holding a glowing wooden twig."
+- Example for an Acrobat Hero: "An active kid wearing a red beanie, a cozy sweater with a hand-drawn bug on it, wearing a cute cardboard eye-mask."
+- Example for a Tech Hero: "A smiling child wearing creatively painted cardboard boxes as armor, with a glowing flashlight taped to their chest."
+- Example for a Detective: "A serious but cute kid wearing a dark raincoat and a towel tied like a cape, holding a plastic magnifying glass."
+
+RULES FOR ART STYLE & ENVIRONMENT:
+- MATCH the art style of the universe dynamically WITHOUT using brand names:
+  - For Japanese heroes (like ninja/anime): use "High-quality Japanese anime style".
+  - For Russian/Classic fairy tale heroes: use "Classic vintage 2D animation style".
+  - For Western superheroes/modern heroes: use "Vibrant 3D animated cartoon style" or "Bright comic book style".
+- Focus on the kid(s) in the center of the scene, enthusiastically playing out the story.
+- The environment should look like a mix of reality (a bedroom, a playground, a backyard) merged with imaginary elements from the story.
+- Include educational/magical elements (glowing 3D geometric shapes, floating colorful books, sparkling magic dust) naturally integrated into their play.
+- NO letters, NO numbers, NO text, NO inscriptions, NO mathematical signs, NO symbols of any kind in the image.
+
+STRICT CHILD SAFETY RULES (MANDATORY — never violate):
+- NO weapons of any kind: no guns, swords, knives, bows. Even fake weapons should be replaced with harmless items (a magic wand, a pointer, a flashlight, a magnifying glass).
+- NO violence, fighting, or conflict.
+- NO scary or horror elements.
+- ONLY child-friendly, safe, positive environments.
+
+OUTPUT (one paragraph, English only):
+"Children's illustration in [INSERT SELECTED ART STYLE HERE]: a happy 7-year-old child pretending to be a [hero archetype], dressed in [describe the cute homemade DIY costume]. The child is [action]. The scene takes place in [environment blending reality and imagination]. [Educational/magical elements]. Bright colors, warm lighting, joyful atmosphere. No text, no letters. Child-safe, peaceful scene."
 
 STORY:
 {story}"""

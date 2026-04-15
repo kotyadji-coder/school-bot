@@ -17,7 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 import db_logger
-from gemini_client import generate_explanation, generate_image_prompt, parse_response
+from gemini_client import generate_explanation, generate_image_prompt, generate_image_prompt_fallback, parse_response
 from image_generator import generate_image
 from smartbot_client import send_message
 from content_generator import save_explanation
@@ -131,7 +131,18 @@ def _generate_and_send(user_id: str, question: str, channel_id: str, callback_ur
             db_logger.log("INFO", "IMAGE_DONE", "Изображение сгенерировано", user_id=user_id, channel_id=channel_id)
         except Exception as img_err:
             db_logger.log("ERROR", "IMAGE_ERROR", f"Ошибка генерации изображения: {img_err}", user_id=user_id, channel_id=channel_id)
-            image_bytes = None
+            if "IMAGE_PROHIBITED_CONTENT" in str(img_err):
+                db_logger.log("INFO", "IMAGE_FALLBACK", "Пробуем запасной промт (kids cosplay)", user_id=user_id, channel_id=channel_id)
+                try:
+                    img_prompt_fallback = generate_image_prompt_fallback(parsed["explanation"])
+                    db_logger.log("INFO", "IMAGE_PROMPT_FALLBACK", img_prompt_fallback[:500], user_id=user_id, channel_id=channel_id)
+                    image_bytes = generate_image(img_prompt_fallback)
+                    db_logger.log("INFO", "IMAGE_DONE", "Изображение сгенерировано (fallback)", user_id=user_id, channel_id=channel_id)
+                except Exception as fallback_err:
+                    db_logger.log("ERROR", "IMAGE_ERROR_FALLBACK", f"Ошибка fallback генерации: {fallback_err}", user_id=user_id, channel_id=channel_id)
+                    image_bytes = None
+            else:
+                image_bytes = None
 
         # 3. Сохраняем HTML-страницу
         content_id = save_explanation(

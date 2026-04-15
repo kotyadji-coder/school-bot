@@ -3,7 +3,7 @@ import os
 import vertexai
 from vertexai.generative_models import GenerativeModel, HarmBlockThreshold, HarmCategory, SafetySetting
 
-from prompts import GENERATE_IMAGE_PROMPT_PROMPT, METHODOLOGIST_PROMPT, TUTOR_GAMER_PROMPT
+from prompts import GENERATE_IMAGE_PROMPT_FALLBACK_PROMPT, GENERATE_IMAGE_PROMPT_PROMPT, METHODOLOGIST_PROMPT, TUTOR_GAMER_PROMPT
 
 PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
 REGION = "global"
@@ -81,5 +81,13 @@ def generate_image_prompt(explanation: str) -> str:
     """Генерирует промт для иллюстрации на основе финального текста урока."""
     model = _get_model()
     prompt = GENERATE_IMAGE_PROMPT_PROMPT.format(story=explanation)
+    response = model.generate_content(prompt, safety_settings=CHILD_SAFETY_SETTINGS)
+    return response.text.strip()
+
+
+def generate_image_prompt_fallback(explanation: str) -> str:
+    """Запасной промт (kids cosplay стратегия) — используется при IMAGE_PROHIBITED_CONTENT."""
+    model = _get_model()
+    prompt = GENERATE_IMAGE_PROMPT_FALLBACK_PROMPT.format(story=explanation)
     response = model.generate_content(prompt, safety_settings=CHILD_SAFETY_SETTINGS)
     return response.text.strip()
