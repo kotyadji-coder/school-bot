@@ -828,13 +828,15 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         function checkAllMatched() {
-            var zones = Array.from(wrapper.querySelectorAll('.drop-zone'));
-            // All zones matched AND no items left in the pool
-            var allZonesMatched = zones.length > 0 && zones.every(function (z) {
-                return z.classList.contains('matched');
+            // Every single drag-item must be sitting inside a .matched zone.
+            // Items still in the pool, or in a wrong-match zone, will fail this check.
+            var allItems = Array.from(wrapper.querySelectorAll('.drag-item'));
+            if (allItems.length === 0) return;
+            var allPlacedCorrectly = allItems.every(function (item) {
+                var zone = item.closest('.drop-zone');
+                return zone && zone.classList.contains('matched');
             });
-            var poolEmpty = pool.querySelectorAll('.drag-item').length === 0;
-            if (allZonesMatched && poolEmpty) onTaskSolved(card);
+            if (allPlacedCorrectly) onTaskSolved(card);
         }
 
         // ── Mouse drag ──
