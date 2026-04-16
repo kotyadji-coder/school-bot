@@ -29,8 +29,8 @@ def _clean_methodologist_notes(text: str) -> str:
     text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
     # Strip remaining lone asterisks
     text = text.replace('*', '')
-    # Split "Предмет: ... Тема:" onto separate lines when on the same line
-    text = re.sub(r'(Предмет:[^\n]+?\.)\s+(Тема:)', r'\1\n\n\2', text)
+    # Split "Предмет: ..." and "Тема:" onto separate lines when on the same line
+    text = re.sub(r'(Предмет:[^\n]+?)\s+(Тема:)', r'\1\n\n\2', text)
     # Ensure a blank line before each numbered section header (e.g. "1. " or "2. ")
     text = re.sub(r'(\n)(\d+\. )', r'\n\n\2', text)
     # Normalize: collapse 3+ consecutive newlines to exactly 2 (done last to catch any doubling above)
@@ -53,7 +53,7 @@ def send_message(
     logger.warning("SmartBot routing: channel_id=%s status=%s block_id=%s", resolved_channel_id, status, block_id)
     if web_url:
         cleaned_notes = _clean_methodologist_notes(methodologist_notes) if methodologist_notes else None
-        notes_block = f"\n\n💡 Рекомендации методиста для родителей:\n\n{cleaned_notes}" if cleaned_notes else ""
+        notes_block = f"\n\n💡 Рекомендации методиста:\n\n{cleaned_notes}" if cleaned_notes else ""
         text = (
             f"🌟 Урок готов!\n\n"
             f"💻 Интерактивный урок: {web_url}\n\n"
