@@ -74,6 +74,11 @@ TUTOR_GAMER_JSON_PROMPT = """РОЛЬ:
 2) Только простые предложения. Никаких деепричастных оборотов.
 3) Никогда не используй LaTeX и знаки $
 4) Вывод — ТОЛЬКО чистый JSON. Без markdown-обёрток (```json), без пояснений до или после JSON.
+5) В математическом контенте всегда используй латинские буквы для переменных и коэффициентов, никогда кириллицу:
+   - Переменные: x, y, z (не "икс", "игрек", "зет")
+   - Коэффициенты: a, b, c, n, m (не "а", "бэ", "цэ", "эн", "эм")
+   - Верно: "Реши уравнение: 2x + 5 = 15"
+   - Неверно: "2 умножить на икс плюс 5 равно 15"
 
 ПРАВИЛА ПРО ВСЕЛЕННУЮ:
 1) Контент вселенной: все предметы, персонажи, примеры, названия — исключительно из выбранной вселенной. Никаких других франшиз и смешений.
@@ -286,23 +291,43 @@ GENERATE_IMAGE_PROMPT_PROMPT = """You are an illustrator for children's educatio
 
 Based on this story, create an image prompt describing ONE SCENE from the story featuring the MAIN HERO.
 
+STEP ZERO — IDENTIFY THE UNIVERSE (CRITICAL):
+Before writing anything, read the STORY carefully and determine which universe/game/cartoon it references.
+The hero you describe MUST belong to THAT universe. Do NOT mix universes. Do NOT default to superheroes if the story is about a game world.
+
 VISUAL TRANSLATION STRATEGY (CRITICAL):
 You must describe the hero so they are HIGHLY RECOGNIZABLE to a child, but you must NEVER use trademarked names to avoid image filter blocks.
 - NEVER use the actual character name or franchise name.
-- NEVER use studio names (like Disney, Pixar, Marvel) in your output.
-- YOU MUST PRESERVE the hero's iconic colors, masks, signature patterns (like webs, stars, bat-symbols), and clothing style.
+- NEVER use studio names (like Disney, Pixar, Marvel, Mojang, Supercell) in your output.
+- YOU MUST PRESERVE the hero's iconic colors, masks, signature patterns, and clothing style.
 - Describe the character visually using generic clothing terms.
+
+Examples by universe type:
+
+GAME CHARACTERS:
+- Example for Minecraft Steve: "A blocky, cube-shaped character with a teal shirt, dark blue pants, and brown hair, rendered in a distinctive voxel/pixel art style where everything is made of cubes and right angles."
+- Example for Minecraft Creeper: "A tall, green, blocky pixelated creature with a sad square face, made entirely of cubes in a voxel world."
+- Example for Brawl Stars character: "A colorful chibi-style cartoon character with a big head and small body, in a bright cel-shaded mobile game style."
+- Example for Roblox character: "A blocky, cube-headed figure with a cheerful face, simple cylindrical limbs, in a colorful low-poly game world."
+
+SUPERHEROES:
 - Example for Spider-Man: "An acrobatic teen hero wearing a full-face mask with large white eyes, dressed in a red and blue tight suit with a dark web-like geometric pattern."
 - Example for Iron Man: "A hero wearing a sleek, shiny red and gold metallic robotic armor with a glowing bright circle on the chest."
 - Example for Batman: "A mysterious hero wearing a dark grey and black suit, a long scalloped black cape, and a cowl mask with pointy ear-like shapes."
 
+ANIMATED CHARACTERS:
+- Example for Elsa: "A young queen with a long platinum blonde braid, wearing a sparkling icy blue gown with a sheer cape that glitters like frost."
+- Example for Ladybug: "A girl in a bright red suit with black polka dots, wearing a red mask with black spots over her eyes."
+
 RULES FOR ART STYLE & SCENE:
 - MATCH the art style of the universe dynamically WITHOUT using brand names:
+  - For voxel/block game worlds: use "Colorful voxel art style with cube-shaped characters and blocky landscapes".
+  - For mobile game heroes (chibi/cel-shaded): use "Bright cel-shaded cartoon style with chibi proportions".
   - For Japanese heroes (like ninja/anime): use "High-quality Japanese anime style".
   - For Russian/Classic fairy tale heroes: use "Classic vintage 2D animation style".
   - For Western superheroes/modern heroes: use "Vibrant 3D animated cartoon style" or "Bright graphic novel style".
 - Focus on the character in the center of the scene, interacting with the environment.
-- Describe a SCENE with environment, objects, and accessories from that universe.
+- Describe a SCENE with environment, objects, and accessories from THAT SPECIFIC universe. Do not borrow elements from other universes.
 - Include magical/educational elements (glowing 3D geometric shapes, floating colorful books, etc.) naturally integrated.
 - Bright colors, warm atmosphere, children's book style.
 - NO letters, NO numbers, NO text, NO inscriptions, NO mathematical signs, NO symbols of any kind in the image.
@@ -330,10 +355,20 @@ GENERATE_IMAGE_PROMPT_FALLBACK_PROMPT = """You are an illustrator for children's
 
 Based on this story, create an image prompt describing ONE SCENE from the story using the "KIDS COSPLAY" approach.
 
+STEP ZERO — IDENTIFY THE UNIVERSE (CRITICAL):
+Before writing anything, read the STORY carefully and determine which universe/game/cartoon it references.
+The cosplay costume MUST match THAT universe. Do NOT mix universes.
+
 THE "KIDS COSPLAY" AVOIDANCE STRATEGY (CRITICAL):
 You MUST NOT describe the actual copyrighted hero. Instead, describe a normal, happy 7-year-old child who is PRETENDING to be the hero using homemade, everyday items.
-- NEVER use the hero's actual name, nor brand names like Marvel, Disney, or Pixar.
+- NEVER use the hero's actual name, nor brand names like Marvel, Disney, Pixar, Mojang, Supercell.
 - CRITICAL: You MUST PRESERVE the hero's iconic colors and signature patterns, but describe them as DIY, homemade clothes and crafts.
+
+GAME CHARACTERS:
+- Example for a Block Game Hero: "A kid wearing a cardboard box on their head painted with a pixelated face, a teal paper shirt, and brown pants, surrounded by cardboard cubes painted as grass and dirt blocks."
+- Example for a Mobile Battle Hero: "A kid in a colorful homemade outfit with oversized cardboard accessories, styled like a chibi cartoon character."
+
+SUPERHEROES:
 - Example for a Wizard: "A cheerful kid wearing a dark oversized bathrobe, a handmade red-and-gold striped scarf, round glasses with tape on the bridge, holding a wooden stick."
 - Example for an Acrobat Hero: "An active kid wearing red and blue homemade pajamas with thick marker-drawn webs, and a cute paper-mache mask with large white mesh eyes."
 - Example for a Tech Hero: "A smiling child wearing cardboard box armor painted bright shiny red and gold, with a glowing tap-light taped to their chest."
@@ -341,6 +376,8 @@ You MUST NOT describe the actual copyrighted hero. Instead, describe a normal, h
 
 RULES FOR ART STYLE & ENVIRONMENT:
 - MATCH the art style of the universe dynamically WITHOUT using brand names:
+  - For voxel/block game worlds: use "Colorful voxel art style with blocky elements".
+  - For mobile game heroes (chibi/cel-shaded): use "Bright cel-shaded cartoon style".
   - For Japanese heroes (like ninja/anime): use "High-quality Japanese anime style".
   - For Russian/Classic fairy tale heroes: use "Classic vintage 2D animation style".
   - For Western superheroes/modern heroes: use "Vibrant 3D animated cartoon style" or "Bright comic book style".
