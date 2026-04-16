@@ -48,4 +48,9 @@ def save_explanation(
     print_html = _jinja_env.get_template("lesson_print.html").render(**context)
     (CONTENT_DIR / f"{content_id}_print.html").write_text(print_html, encoding="utf-8")
 
+    # Save context JSON so the print page can be re-rendered dynamically
+    (CONTENT_DIR / f"{content_id}.json").write_text(
+        json.dumps(context, ensure_ascii=False), encoding="utf-8"
+    )
+
     return content_id

@@ -293,9 +293,9 @@
             border-radius: 5px;
         }
 
-        /* ── PRINT BUTTON BAR (screen only) ── */
+        /* ── PRINT BUTTON BAR (screen only, hidden by default — shown by JS in real browsers) ── */
         .print-btn-bar {
-            display: flex;
+            display: none;
             justify-content: center;
             padding: 16px 0 0;
             margin-bottom: 2rem;
@@ -327,9 +327,9 @@
             text-align: center;
         }
 
-        /* ── TELEGRAM BANNER (screen only) ── */
+        /* ── TELEGRAM BANNER (visible by default — hidden by JS in real browsers) ── */
         .tg-banner {
-            display: none;
+            display: block;
             background: #fffbeb;
             border: 2px solid #f59e0b;
             border-radius: 12px;
@@ -510,23 +510,15 @@
 </div>
 
 <script>
+// Default state: print button hidden, banner visible (safe for Telegram / JS failure).
+// Only reveal print button when we are SURE this is a real browser.
 (function () {
     var ua = navigator.userAgent || '';
+    var isTelegram = /Telegram/i.test(ua) || window.TelegramWebviewProxy !== undefined;
 
-    // If the UA contains "Telegram" it is always Telegram's in-app browser
-    var isWebView = /Telegram/i.test(ua);
-
-    var banner = document.getElementById('tgBanner');
-    var btnBar = document.getElementById('printBtnBar');
-
-    if (isWebView) {
-        // Telegram in-app browser — hide print button, show instruction banner
-        banner.style.display = 'block';
-        btnBar.style.display  = 'none';
-    } else {
-        // Regular browser (Safari, Chrome, Firefox, desktop) — hide banner, show print button
-        banner.style.display = 'none';
-        btnBar.style.display  = 'flex';
+    if (!isTelegram) {
+        document.getElementById('tgBanner').style.display = 'none';
+        document.getElementById('printBtnBar').style.display = 'flex';
     }
 })();
 

@@ -770,20 +770,23 @@
     </div>
 
     <div class="page-footer">
-        <button class="footer-btn footer-btn-secondary" onclick="handlePrint()">
+        <button id="print-btn" class="footer-btn footer-btn-secondary" onclick="handlePrint()" style="display:none;">
             🖨 Распечатать
         </button>
         <a class="footer-btn footer-btn-primary" href="https://edtale.ru/">
             ✨ Создать урок
         </a>
     </div>
+    <p id="tg-hint" style="color:#888; font-size:0.9em; text-align:center; margin-top:12px;">
+        Для печати откройте страницу в браузере
+    </p>
 
 </div>
 
 <script>
     // ── PRINT HANDLER ───────────────────────────────────────────────────────
     function handlePrint() {
-        var isTelegram = /Telegram/i.test(navigator.userAgent || '');
+        var isTelegram = /Telegram/i.test(navigator.userAgent || '') || window.TelegramWebviewProxy !== undefined;
         if (isTelegram) {
             document.getElementById('tgOverlay').classList.add('visible');
         } else {
@@ -796,6 +799,17 @@
             }
         }
     }
+
+    // ── REVERSE DEFAULT: print button hidden, hint visible.
+    // Only reveal print button in a real browser (not Telegram).
+    (function () {
+        var ua = navigator.userAgent || '';
+        var isTelegram = /Telegram/i.test(ua) || window.TelegramWebviewProxy !== undefined;
+        if (!isTelegram) {
+            document.getElementById('print-btn').style.display = '';
+            document.getElementById('tg-hint').style.display = 'none';
+        }
+    })();
 
     // ── SCROLL-IN: theory cards only ────────────────────────────────────────
     (function () {

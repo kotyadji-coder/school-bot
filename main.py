@@ -20,7 +20,7 @@ import db_logger
 from gemini_client import generate_explanation, generate_image_prompt, generate_image_prompt_fallback
 from image_generator import generate_image
 from smartbot_client import send_message
-from content_generator import save_explanation
+from content_generator import save_explanation, _jinja_env
 
 # TODO: Replace with your actual admin credentials
 ADMIN_BOT_TOKEN = os.getenv("ADMIN_BOT_TOKEN", "")
@@ -214,6 +214,15 @@ async def generate(request: Request):
 
 @app.get("/e/{content_id}", response_class=HTMLResponse)
 async def get_lesson(content_id: str):
+    # For print pages, re-render from template if context JSON exists
+    # so that template fixes (e.g. Telegram detection) apply immediately
+    if content_id.endswith("_print"):
+        base_id = content_id[:-6]  # strip "_print"
+        json_path = CONTENT_DIR / f"{base_id}.json"
+        if json_path.exists():
+            context = json.loads(json_path.read_text(encoding="utf-8"))
+            return _jinja_env.get_template("lesson_print.html").render(**context)
+
     html_path = CONTENT_DIR / f"{content_id}.html"
     if not html_path.exists():
         raise HTTPException(status_code=404, detail="Урок не найден")
