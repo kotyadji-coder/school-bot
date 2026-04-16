@@ -56,8 +56,8 @@ def send_message(
         notes_block = f"\n\n💡 Рекомендации методиста:\n\n{cleaned_notes}" if cleaned_notes else ""
         text = (
             f"🌟 Урок готов!\n\n"
-            f"💻 Интерактивный урок: {web_url}\n\n"
-            f"🖨 Версия для печати: {print_url}\n\n"
+            f"💻 [Интерактивный урок]({web_url})\n\n"
+            f"🖨 [Версия для печати]({print_url})\n\n"
             f"Что внутри:\n"
             f"• Урок в стиле любимого героя\n"
             f"• Миссии (задания)\n\n"

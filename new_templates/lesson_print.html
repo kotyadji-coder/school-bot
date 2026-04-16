@@ -118,7 +118,7 @@
             border: 1.5px solid #d1d5db;
             border-radius: 10px;
             padding: 14px 16px;
-            margin-bottom: 12px;
+            margin-bottom: 20px;
             page-break-inside: avoid;
         }
 
@@ -368,10 +368,15 @@
 
             .print-image { max-width: 50%; max-height: none; object-fit: contain; margin: 0 auto 20px; }
 
-            /* Allow natural page flow */
-            .theory-section, .tasks-section, .story-card, .task-card {
+            /* Allow natural page flow for theory, but keep tasks together */
+            .theory-section, .tasks-section, .story-card {
                 page-break-inside: auto;
                 break-inside: auto;
+            }
+
+            .task-card {
+                page-break-inside: avoid;
+                break-inside: avoid;
             }
 
             /* Hide all interactive / screen-only UI */
