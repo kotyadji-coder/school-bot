@@ -1,9 +1,14 @@
 import json
+import logging
 import os
 import re
+import time
 
 import vertexai
+from google.api_core.exceptions import ResourceExhausted
 from vertexai.generative_models import GenerationConfig, GenerativeModel, HarmBlockThreshold, HarmCategory, SafetySetting
+
+logger = logging.getLogger(__name__)
 
 from prompts import (
     GENERATE_IMAGE_PROMPT_FALLBACK_PROMPT,
@@ -47,6 +52,19 @@ def _get_model() -> GenerativeModel:
     return GenerativeModel(MODEL_NAME)
 
 
+def _call_with_retry(model, *args, max_retries=3, **kwargs):
+    """Call model.generate_content with retry on 429 (ResourceExhausted)."""
+    for attempt in range(max_retries + 1):
+        try:
+            return model.generate_content(*args, **kwargs)
+        except ResourceExhausted:
+            if attempt == max_retries:
+                raise
+            wait = 2 ** attempt * 5  # 5s, 10s, 20s
+            logger.warning(f"Gemini 429 rate limit, retry {attempt + 1}/{max_retries} after {wait}s")
+            time.sleep(wait)
+
+
 def _extract_json(raw: str) -> dict:
     """Strip markdown fences and extract the JSON object from the model response."""
     cleaned = re.sub(r"^```(?:json)?\s*", "", raw.strip(), flags=re.MULTILINE)
@@ -70,7 +88,7 @@ def generate_explanation(question: str) -> tuple[str, dict]:
 
     # Step 1: methodologist (plain text)
     step1_prompt = METHODOLOGIST_PROMPT.format(question=question)
-    step1_response = model.generate_content(step1_prompt, safety_settings=CHILD_SAFETY_SETTINGS)
+    step1_response = _call_with_retry(model, step1_prompt, safety_settings=CHILD_SAFETY_SETTINGS)
     methodologist_output = step1_response.text.strip()
 
     # Step 2: tutor-gamer → strict JSON
@@ -78,8 +96,8 @@ def generate_explanation(question: str) -> tuple[str, dict]:
         question=question,
         methodologist_output=methodologist_output,
     )
-    step2_response = model.generate_content(
-        step2_prompt,
+    step2_response = _call_with_retry(
+        model, step2_prompt,
         generation_config=GenerationConfig(response_mime_type="application/json"),
         safety_settings=CHILD_SAFETY_SETTINGS,
     )
@@ -92,7 +110,7 @@ def generate_image_prompt(explanation: str) -> str:
     """Генерирует промт для иллюстрации на основе финального текста урока."""
     model = _get_model()
     prompt = GENERATE_IMAGE_PROMPT_PROMPT.format(story=explanation)
-    response = model.generate_content(prompt, safety_settings=CHILD_SAFETY_SETTINGS)
+    response = _call_with_retry(model, prompt, safety_settings=CHILD_SAFETY_SETTINGS)
     return response.text.strip()
 
 
@@ -100,5 +118,5 @@ def generate_image_prompt_fallback(explanation: str) -> str:
     """Запасной промт (kids cosplay стратегия) — используется при IMAGE_PROHIBITED_CONTENT."""
     model = _get_model()
     prompt = GENERATE_IMAGE_PROMPT_FALLBACK_PROMPT.format(story=explanation)
-    response = model.generate_content(prompt, safety_settings=CHILD_SAFETY_SETTINGS)
+    response = _call_with_retry(model, prompt, safety_settings=CHILD_SAFETY_SETTINGS)
     return response.text.strip()
