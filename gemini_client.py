@@ -20,6 +20,7 @@ from prompts import (
 PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
 REGION = "global"
 MODEL_NAME = "gemini-3.1-pro-preview"
+FALLBACK_MODEL_NAME = "gemini-2.5-pro"
 
 CHILD_SAFETY_SETTINGS = [
     SafetySetting(
@@ -41,7 +42,7 @@ CHILD_SAFETY_SETTINGS = [
 ]
 
 
-def _get_model() -> GenerativeModel:
+def _get_model(model_name: str = MODEL_NAME) -> GenerativeModel:
     credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
     if credentials_path:
         from google.oauth2 import service_account
@@ -49,20 +50,25 @@ def _get_model() -> GenerativeModel:
         vertexai.init(project=PROJECT_ID, location=REGION, credentials=credentials)
     else:
         vertexai.init(project=PROJECT_ID, location=REGION)
-    return GenerativeModel(MODEL_NAME)
+    return GenerativeModel(model_name)
 
 
 def _call_with_retry(model, *args, max_retries=3, **kwargs):
-    """Call model.generate_content with retry on 429 (ResourceExhausted)."""
+    """Call model.generate_content with retry on 429, fallback to gemini-2.5-pro."""
     for attempt in range(max_retries + 1):
         try:
             return model.generate_content(*args, **kwargs)
         except ResourceExhausted:
             if attempt == max_retries:
-                raise
+                break
             wait = 2 ** attempt * 5  # 5s, 10s, 20s
             logger.warning(f"Gemini 429 rate limit, retry {attempt + 1}/{max_retries} after {wait}s")
             time.sleep(wait)
+
+    # All retries exhausted — fallback to stable model
+    logger.warning(f"Retries exhausted for {MODEL_NAME}, falling back to {FALLBACK_MODEL_NAME}")
+    fallback_model = _get_model(FALLBACK_MODEL_NAME)
+    return fallback_model.generate_content(*args, **kwargs)
 
 
 def _extract_json(raw: str) -> dict:
