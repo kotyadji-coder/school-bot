@@ -4,9 +4,8 @@ import os
 import re
 import time
 
-import vertexai
-from google.api_core.exceptions import ResourceExhausted
-from vertexai.generative_models import GenerationConfig, GenerativeModel, HarmBlockThreshold, HarmCategory, SafetySetting
+from google import genai
+from google.genai import types
 
 logger = logging.getLogger(__name__)
 
@@ -17,58 +16,97 @@ from prompts import (
     TUTOR_GAMER_JSON_PROMPT,
 )
 
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
-REGION = "global"
-MODEL_NAME = "gemini-3.1-pro-preview"
-FALLBACK_MODEL_NAME = "gemini-2.5-pro"
+VERTEX_REGION = "global"
 
 CHILD_SAFETY_SETTINGS = [
-    SafetySetting(
-        category=HarmCategory.HARM_CATEGORY_HARASSMENT,
-        threshold=HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
-    ),
-    SafetySetting(
-        category=HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-        threshold=HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
-    ),
-    SafetySetting(
-        category=HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-        threshold=HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
-    ),
-    SafetySetting(
-        category=HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-        threshold=HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
-    ),
+    types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_LOW_AND_ABOVE"),
+    types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_LOW_AND_ABOVE"),
+    types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_LOW_AND_ABOVE"),
+    types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_LOW_AND_ABOVE"),
+]
+
+# Fallback chain: AI Studio Pro → AI Studio Flash → Vertex AI Pro
+FALLBACK_CHAIN = [
+    ("ai_studio", "gemini-2.5-pro"),
+    ("ai_studio", "gemini-2.5-flash"),
+    ("vertex", "gemini-2.5-pro"),
 ]
 
 
-def _get_model(model_name: str = MODEL_NAME) -> GenerativeModel:
+def _get_ai_studio_client() -> genai.Client:
+    return genai.Client(api_key=GEMINI_API_KEY)
+
+
+def _get_vertex_client() -> genai.Client:
     credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
     if credentials_path:
         from google.oauth2 import service_account
-        credentials = service_account.Credentials.from_service_account_file(credentials_path)
-        vertexai.init(project=PROJECT_ID, location=REGION, credentials=credentials)
-    else:
-        vertexai.init(project=PROJECT_ID, location=REGION)
-    return GenerativeModel(model_name)
+        credentials = service_account.Credentials.from_service_account_file(
+            credentials_path,
+            scopes=["https://www.googleapis.com/auth/cloud-platform"],
+        )
+        return genai.Client(
+            vertexai=True,
+            project=PROJECT_ID,
+            location=VERTEX_REGION,
+            credentials=credentials,
+        )
+    return genai.Client(
+        vertexai=True,
+        project=PROJECT_ID,
+        location=VERTEX_REGION,
+    )
 
 
-def _call_with_retry(model, *args, max_retries=3, **kwargs):
-    """Call model.generate_content with retry on 429, fallback to gemini-2.5-pro."""
-    for attempt in range(max_retries + 1):
+def _call_with_fallback(contents, config=None):
+    """Try each backend/model in FALLBACK_CHAIN. Retry 429s with backoff before moving on."""
+    last_error = None
+
+    for backend, model_name in FALLBACK_CHAIN:
         try:
-            return model.generate_content(*args, **kwargs)
-        except ResourceExhausted:
-            if attempt == max_retries:
-                break
-            wait = 2 ** attempt * 5  # 5s, 10s, 20s
-            logger.warning(f"Gemini 429 rate limit, retry {attempt + 1}/{max_retries} after {wait}s")
-            time.sleep(wait)
+            if backend == "ai_studio":
+                if not GEMINI_API_KEY:
+                    logger.info(f"Skipping AI Studio ({model_name}): no API key")
+                    continue
+                client = _get_ai_studio_client()
+            else:
+                client = _get_vertex_client()
 
-    # All retries exhausted — fallback to stable model
-    logger.warning(f"Retries exhausted for {MODEL_NAME}, falling back to {FALLBACK_MODEL_NAME}")
-    fallback_model = _get_model(FALLBACK_MODEL_NAME)
-    return fallback_model.generate_content(*args, **kwargs)
+            tag = f"{backend}/{model_name}"
+
+            # Retry loop for rate limits (429)
+            for attempt in range(4):  # 0, 1, 2, 3
+                try:
+                    logger.info(f"Calling {tag} (attempt {attempt + 1})")
+                    response = client.models.generate_content(
+                        model=model_name,
+                        contents=contents,
+                        config=config,
+                    )
+                    logger.info(f"Success from {tag}")
+                    return response
+                except Exception as e:
+                    error_str = str(e)
+                    if "429" in error_str or "RESOURCE_EXHAUSTED" in error_str.upper():
+                        if attempt < 3:
+                            wait = 2 ** attempt * 5
+                            logger.warning(f"{tag} rate limit, retry {attempt + 1}/3 after {wait}s")
+                            time.sleep(wait)
+                            continue
+                        logger.warning(f"{tag} rate limit exhausted, moving to next backend")
+                        last_error = e
+                        break
+                    else:
+                        raise
+
+        except Exception as e:
+            logger.warning(f"Failed {backend}/{model_name}: {e}")
+            last_error = e
+            continue
+
+    raise last_error or RuntimeError("All backends failed")
 
 
 def _extract_json(raw: str) -> dict:
@@ -90,11 +128,13 @@ def generate_explanation(question: str) -> tuple[str, dict]:
 
     Returns (methodologist_output, lesson_dict).
     """
-    model = _get_model()
+    safety_config = types.GenerateContentConfig(
+        safety_settings=CHILD_SAFETY_SETTINGS,
+    )
 
     # Step 1: methodologist (plain text)
     step1_prompt = METHODOLOGIST_PROMPT.format(question=question)
-    step1_response = _call_with_retry(model, step1_prompt, safety_settings=CHILD_SAFETY_SETTINGS)
+    step1_response = _call_with_fallback(step1_prompt, config=safety_config)
     methodologist_output = step1_response.text.strip()
 
     # Step 2: tutor-gamer → strict JSON
@@ -102,27 +142,31 @@ def generate_explanation(question: str) -> tuple[str, dict]:
         question=question,
         methodologist_output=methodologist_output,
     )
-    step2_response = _call_with_retry(
-        model, step2_prompt,
-        generation_config=GenerationConfig(response_mime_type="application/json"),
+    json_config = types.GenerateContentConfig(
+        response_mime_type="application/json",
         safety_settings=CHILD_SAFETY_SETTINGS,
     )
+    step2_response = _call_with_fallback(step2_prompt, config=json_config)
     lesson_dict = _extract_json(step2_response.text)
 
     return methodologist_output, lesson_dict
 
 
 def generate_image_prompt(explanation: str) -> str:
-    """Генерирует промт для иллюстрации на основе финального текста урока."""
-    model = _get_model()
+    """Generates image prompt based on lesson text."""
+    safety_config = types.GenerateContentConfig(
+        safety_settings=CHILD_SAFETY_SETTINGS,
+    )
     prompt = GENERATE_IMAGE_PROMPT_PROMPT.format(story=explanation)
-    response = _call_with_retry(model, prompt, safety_settings=CHILD_SAFETY_SETTINGS)
+    response = _call_with_fallback(prompt, config=safety_config)
     return response.text.strip()
 
 
 def generate_image_prompt_fallback(explanation: str) -> str:
-    """Запасной промт (kids cosplay стратегия) — используется при IMAGE_PROHIBITED_CONTENT."""
-    model = _get_model()
+    """Fallback image prompt (kids cosplay strategy) for IMAGE_PROHIBITED_CONTENT."""
+    safety_config = types.GenerateContentConfig(
+        safety_settings=CHILD_SAFETY_SETTINGS,
+    )
     prompt = GENERATE_IMAGE_PROMPT_FALLBACK_PROMPT.format(story=explanation)
-    response = _call_with_retry(model, prompt, safety_settings=CHILD_SAFETY_SETTINGS)
+    response = _call_with_fallback(prompt, config=safety_config)
     return response.text.strip()
