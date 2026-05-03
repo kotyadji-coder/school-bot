@@ -8,6 +8,8 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
 logger = logging.getLogger("school-bot")
 
+_last_backend = "unknown"
+
 # Image generation fallback chain: AI Studio → Vertex AI
 IMAGE_BACKENDS = [
     "ai_studio",
@@ -87,6 +89,8 @@ def generate_image(image_prompt: str) -> bytes:
             for part in candidate.content.parts:
                 if part.inline_data is not None:
                     logger.info(f"Image generated via {backend}")
+                    global _last_backend
+                    _last_backend = f"{backend}/{IMAGE_MODEL}"
                     return part.inline_data.data
 
             raise ValueError("No image data in response parts")
@@ -97,3 +101,7 @@ def generate_image(image_prompt: str) -> bytes:
             continue
 
     raise last_error or RuntimeError("All image backends failed")
+
+
+def get_last_backend() -> str:
+    return _last_backend

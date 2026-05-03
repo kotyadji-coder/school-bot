@@ -9,6 +9,8 @@ from google.genai import types
 
 logger = logging.getLogger(__name__)
 
+_last_backend = "unknown"
+
 from prompts import (
     GENERATE_IMAGE_PROMPT_FALLBACK_PROMPT,
     GENERATE_IMAGE_PROMPT_PROMPT,
@@ -86,6 +88,8 @@ def _call_with_fallback(contents, config=None):
                         config=config,
                     )
                     logger.info(f"Success from {tag}")
+                    global _last_backend
+                    _last_backend = tag
                     return response
                 except Exception as e:
                     error_str = str(e)
@@ -107,6 +111,10 @@ def _call_with_fallback(contents, config=None):
             continue
 
     raise last_error or RuntimeError("All backends failed")
+
+
+def get_last_backend() -> str:
+    return _last_backend
 
 
 def _extract_json(raw: str) -> dict:

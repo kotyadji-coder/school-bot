@@ -17,8 +17,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 import db_logger
-from gemini_client import generate_explanation, generate_image_prompt, generate_image_prompt_fallback
-from image_generator import generate_image
+from gemini_client import generate_explanation, generate_image_prompt, generate_image_prompt_fallback, get_last_backend as get_text_backend
+from image_generator import generate_image, get_last_backend as get_image_backend
 from smartbot_client import send_message
 from content_generator import save_explanation, _jinja_env
 
@@ -119,6 +119,7 @@ def _generate_and_send(user_id: str, question: str, channel_id: str, callback_ur
         methodologist_output, lesson_json = generate_explanation(question)
         db_logger.log("INFO", "STEP1_RESULT", methodologist_output[:500], user_id=user_id, channel_id=channel_id)
         db_logger.log("INFO", "STEP2_RESULT", lesson_json.get("title", "")[:200], user_id=user_id, channel_id=channel_id)
+        db_logger.log("INFO", "AI_BACKEND", f"Текст: {get_text_backend()}", user_id=user_id, channel_id=channel_id)
 
         # Build plain text from story_blocks for image prompt generation
         story_text = "\n".join(b["text"] for b in lesson_json.get("story_blocks", []))
@@ -131,6 +132,7 @@ def _generate_and_send(user_id: str, question: str, channel_id: str, callback_ur
         try:
             image_bytes = generate_image(img_prompt)
             db_logger.log("INFO", "IMAGE_DONE", "Изображение сгенерировано", user_id=user_id, channel_id=channel_id)
+            db_logger.log("INFO", "AI_BACKEND", f"Картинка: {get_image_backend()}", user_id=user_id, channel_id=channel_id)
         except Exception as img_err:
             db_logger.log("ERROR", "IMAGE_ERROR", f"Ошибка генерации изображения: {img_err}", user_id=user_id, channel_id=channel_id)
             if "IMAGE_PROHIBITED_CONTENT" in str(img_err):
@@ -140,6 +142,7 @@ def _generate_and_send(user_id: str, question: str, channel_id: str, callback_ur
                     db_logger.log("INFO", "IMAGE_PROMPT_FALLBACK", img_prompt_fallback[:500], user_id=user_id, channel_id=channel_id)
                     image_bytes = generate_image(img_prompt_fallback)
                     db_logger.log("INFO", "IMAGE_DONE", "Изображение сгенерировано (fallback)", user_id=user_id, channel_id=channel_id)
+                    db_logger.log("INFO", "AI_BACKEND", f"Картинка: {get_image_backend()}", user_id=user_id, channel_id=channel_id)
                 except Exception as fallback_err:
                     db_logger.log("ERROR", "IMAGE_ERROR_FALLBACK", f"Ошибка fallback генерации: {fallback_err}", user_id=user_id, channel_id=channel_id)
                     image_bytes = None
@@ -158,18 +161,34 @@ def _generate_and_send(user_id: str, question: str, channel_id: str, callback_ur
         web_url   = f"{SERVER_URL}/e/{content_id}"
         print_url = f"{SERVER_URL}/e/{content_id}_print"
 
-        try:
-            send_message(peer_id=user_id, status="success", channel_id=channel_id, web_url=web_url, print_url=print_url, methodologist_notes=methodologist_output)
-            db_logger.log("INFO", "CALLBACK_SENT", f"Ответ отправлен в SmartBot, content_id={content_id}", user_id=user_id, channel_id=channel_id)
-        except Exception as cb_err:
-            db_logger.log("ERROR", "CALLBACK_ERROR", f"Ошибка отправки в SmartBot: {cb_err}", user_id=user_id, channel_id=channel_id)
-            raise
+        # Отправляем через SmartBot только если это НЕ kidion
+        if channel_id != "kidion":
+            try:
+                send_message(peer_id=user_id, status="success", channel_id=channel_id, web_url=web_url, print_url=print_url, methodologist_notes=methodologist_output)
+                db_logger.log("INFO", "CALLBACK_SENT", f"Ответ отправлен в SmartBot, content_id={content_id}", user_id=user_id, channel_id=channel_id)
+            except Exception as cb_err:
+                db_logger.log("ERROR", "CALLBACK_ERROR", f"Ошибка отправки в SmartBot: {cb_err}", user_id=user_id, channel_id=channel_id)
+                raise
+
+        # Отправляем на callback_url если есть
+        if callback_url:
+            try:
+                httpx.post(
+                    callback_url,
+                    json={"status": "done", "user_id": user_id, "web_url": web_url, "print_url": print_url},
+                    timeout=10,
+                )
+                db_logger.log("INFO", "WEB_CALLBACK_SENT", f"Callback отправлен: {callback_url}", user_id=user_id, channel_id=channel_id)
+            except Exception as wcb_err:
+                db_logger.log("ERROR", "WEB_CALLBACK_ERROR", f"Ошибка callback: {wcb_err}", user_id=user_id, channel_id=channel_id)
 
     except Exception as e:
         error_message = str(e)
         db_logger.log("ERROR", "ERROR", f"Необработанная ошибка: {error_message}", user_id=user_id, channel_id=channel_id)
         logger.exception("Ошибка при генерации объяснения для user_id=%s", user_id)
-        send_message(peer_id=user_id, status="error", channel_id=channel_id)
+        # SmartBot ошибку только для НЕ kidion
+        if channel_id != "kidion":
+            send_message(peer_id=user_id, status="error", channel_id=channel_id)
         _notify_admin(error_message=error_message, user_id=user_id)
         if callback_url:
             try:
