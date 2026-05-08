@@ -10,9 +10,9 @@ logger = logging.getLogger("school-bot")
 
 _last_backend = "unknown"
 
-# Image generation fallback chain: AI Studio → Vertex AI
+# Image generation: Vertex AI only
+# (AI Studio free tier has 0 quota for image generation model)
 IMAGE_BACKENDS = [
-    "ai_studio",
     "vertex",
 ]
 IMAGE_MODEL = "gemini-2.5-flash-image"
