@@ -448,6 +448,15 @@
             min-width: 120px;
         }
 
+        /* Constrain drag-item inside drop zone so it doesn't overflow */
+        .zone-slot .drag-item {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            box-sizing: border-box;
+        }
+
         /* ── FILL IN BLANK ── */
         .fitb-row {
             display: flex;
@@ -621,6 +630,8 @@
             .story-emoji     { width: 44px; height: 44px; font-size: 1.6rem; }
             .task-card       { padding: 22px 18px; }
             .drop-zones      { flex-direction: column; }
+            .dnd-sentence    { flex-direction: column; align-items: stretch; gap: 6px; }
+            .dnd-sentences .drop-zone { min-width: 0; width: 100%; }
             .fitb-row        { flex-direction: column; align-items: stretch; }
             .fitb-row .check-btn { align-self: flex-start; }
             .theory-image         { max-height: 180px; }
