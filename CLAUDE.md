@@ -48,3 +48,13 @@ When deploying changes, always: git add, git commit, git push, then ssh to VPS a
 - **Port:** `8001`
 - **Domain:** `edtale.ru`
 - **systemd service:** `school-bot`
+
+
+## LLM Dashboard Integration
+
+Token usage from every Gemini call is sent to the centralized LLM Dashboard (`http://5.42.101.215:8005/`).
+
+- **How:** fire-and-forget `httpx.post()` in a daemon thread after each `generate_content()` call
+- **Where:** `gemini_client.py` — `_send_to_dashboard()` function, called from `_call_with_fallback()`
+- **Dashboard project:** `~/Documents/projects/llm-dashboard`
+- **If dashboard is down:** errors silently logged at DEBUG level, bot works normally
