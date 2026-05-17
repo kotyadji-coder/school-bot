@@ -2,12 +2,32 @@ import json
 import logging
 import os
 import re
+import threading
 import time
 
+import httpx
 from google import genai
 from google.genai import types
 
 logger = logging.getLogger(__name__)
+
+LLM_DASHBOARD_URL = "http://5.42.101.215:8005/api/usage"
+
+
+def _send_to_dashboard(model: str, response):
+    try:
+        input_tokens = getattr(getattr(response, "usage_metadata", None), "prompt_token_count", 0) or 0
+        output_tokens = getattr(getattr(response, "usage_metadata", None), "candidates_token_count", 0) or 0
+        if not (input_tokens or output_tokens):
+            return
+        httpx.post(LLM_DASHBOARD_URL, json={
+            "project": "school-bot",
+            "model": model,
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+        }, timeout=5)
+    except Exception:
+        logger.debug("Failed to send usage to LLM dashboard", exc_info=True)
 
 _last_backend = "unknown"
 
@@ -90,6 +110,7 @@ def _call_with_fallback(contents, config=None):
                     logger.info(f"Success from {tag}")
                     global _last_backend
                     _last_backend = tag
+                    threading.Thread(target=_send_to_dashboard, args=(model_name, response), daemon=True).start()
                     return response
                 except Exception as e:
                     error_str = str(e)
