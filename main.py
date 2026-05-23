@@ -17,6 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 import db_logger
+import evaluator
 from gemini_client import generate_explanation, generate_image_prompt, generate_image_prompt_fallback, get_last_backend as get_text_backend
 from image_generator import generate_image, get_last_backend as get_image_backend
 from smartbot_client import send_message
@@ -156,6 +157,21 @@ def _generate_and_send(user_id: str, question: str, channel_id: str, callback_ur
             server_url=SERVER_URL,
         )
         db_logger.log("INFO", "EXPLANATION_DONE", f"Урок сохранён: {content_id}", user_id=user_id, channel_id=channel_id)
+
+        # 3.5. Автоматическая оценка качества урока
+        try:
+            eval_result = evaluator.run_evaluation(
+                content_id=content_id,
+                lesson_json=lesson_json,
+                bot_token=ADMIN_BOT_TOKEN,
+                chat_id=ADMIN_CHAT_ID,
+                server_url=SERVER_URL,
+            )
+            db_logger.log("INFO", "EVAL_DONE",
+                f"Оценка: {eval_result['score']}/100, критических: {eval_result['critical']}",
+                user_id=user_id, channel_id=channel_id)
+        except Exception as eval_err:
+            db_logger.log("ERROR", "EVAL_ERROR", f"Ошибка оценки: {eval_err}", user_id=user_id, channel_id=channel_id)
 
         # 4. Отправляем через SmartBot
         web_url   = f"{SERVER_URL}/e/{content_id}"
@@ -348,6 +364,60 @@ async def admin_stats(password: str = Query(...)):
 </body>
 </html>"""
     return html
+
+
+@app.get("/admin/evals", response_class=HTMLResponse)
+async def admin_evals(password: str = Query(...)):
+    _check_password(password)
+    stats = evaluator.get_stats_summary()
+    evaluations = evaluator.get_recent_evaluations(50)
+    recommendations = evaluator.get_recommendations("open")
+    recommendations += evaluator.get_recommendations("reopened")
+    archived = evaluator.get_recommendations("fixed")
+    archived += evaluator.get_recommendations("archived")
+
+    check_names = evaluator.CHECK_DISPLAY_NAMES
+
+    # Prepare chart data
+    common_failures_enriched = [
+        {"check": f["check"], "count": f["count"],
+         "display": check_names.get(f["check"], f["check"])}
+        for f in stats["common_failures"]
+    ]
+
+    return _jinja_env.get_template("eval_dashboard.html").render(
+        password=password,
+        stats=stats,
+        evaluations=evaluations,
+        recommendations=recommendations,
+        archived=archived,
+        check_names=check_names,
+        score_distribution_json=json.dumps(stats["score_distribution"]),
+        daily_scores_json=json.dumps(stats["daily_scores"]),
+        common_failures_json=json.dumps(common_failures_enriched),
+    )
+
+
+@app.get("/admin/evals/{content_id}", response_class=HTMLResponse)
+async def admin_eval_detail(content_id: str, password: str = Query(...)):
+    _check_password(password)
+    evaluation = evaluator.get_evaluation_by_content(content_id)
+    if not evaluation:
+        raise HTTPException(status_code=404, detail="Оценка не найдена")
+    checks = json.loads(evaluation["checks_json"])
+    return _jinja_env.get_template("eval_detail.html").render(
+        password=password,
+        content_id=content_id,
+        evaluation=evaluation,
+        checks=checks,
+    )
+
+
+@app.post("/admin/evals/api/recommendation/{rec_id}/toggle")
+async def toggle_recommendation(rec_id: int, password: str = Query(...)):
+    _check_password(password)
+    evaluator.update_recommendation_status(rec_id, "fixed")
+    return {"status": "ok"}
 
 
 @app.get("/favicon.ico")

@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eval Dashboard — School Bot</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0f1117;
+            --card: #1a1d27;
+            --border: #2a2d3a;
+            --text: #e4e4e7;
+            --muted: #71717a;
+            --accent: #818cf8;
+            --green: #34d399;
+            --red: #f87171;
+            --orange: #fbbf24;
+            --radius: 12px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px; }
+        h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 16px; color: var(--muted); }
+        .subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 32px; }
+
+        /* ── Stats cards ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+        }
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 900;
+            line-height: 1.1;
+        }
+        .stat-label { color: var(--muted); font-size: 0.82rem; font-weight: 600; margin-top: 4px; }
+        .stat-green { color: var(--green); }
+        .stat-red { color: var(--red); }
+        .stat-accent { color: var(--accent); }
+        .stat-orange { color: var(--orange); }
+
+        /* ── Charts ── */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .chart-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+        }
+        .chart-card h3 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--muted);
+        }
+
+        /* ── Tabs ── */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+        }
+        .tab {
+            padding: 8px 18px;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--muted);
+            border: 1px solid transparent;
+            cursor: pointer;
+            font-size: 0.88rem;
+            font-weight: 700;
+            font-family: inherit;
+            transition: all 0.15s;
+        }
+        .tab:hover { color: var(--text); background: var(--card); }
+        .tab.active { color: var(--accent); background: var(--card); border-color: var(--border); }
+        .tab .badge {
+            display: inline-block;
+            background: var(--red);
+            color: #fff;
+            font-size: 0.72rem;
+            padding: 1px 7px;
+            border-radius: 10px;
+            margin-left: 6px;
+            font-weight: 800;
+        }
+
+        /* ── Table ── */
+        .table-wrap {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+        }
+        th {
+            text-align: left;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.03);
+            color: var(--muted);
+            font-weight: 700;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        td {
+            padding: 10px 16px;
+            border-top: 1px solid var(--border);
+            vertical-align: middle;
+        }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+
+        .score-badge {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-weight: 800;
+            font-size: 0.82rem;
+        }
+        .score-high { background: rgba(52,211,153,0.15); color: var(--green); }
+        .score-mid  { background: rgba(251,191,36,0.15);  color: var(--orange); }
+        .score-low  { background: rgba(248,113,113,0.15); color: var(--red); }
+
+        .link { color: var(--accent); text-decoration: none; font-weight: 600; }
+        .link:hover { text-decoration: underline; }
+
+        .crit-badge {
+            display: inline-block;
+            background: rgba(248,113,113,0.15);
+            color: var(--red);
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 0.78rem;
+        }
+
+        /* ── Recommendations ── */
+        .rec-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+        .rec-card.reopened { border-left: 3px solid var(--red); }
+        .rec-card.open { border-left: 3px solid var(--orange); }
+
+        .rec-check {
+            flex-shrink: 0;
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            border: 2px solid var(--border);
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: transparent;
+            font-size: 14px;
+            margin-top: 2px;
+            transition: all 0.15s;
+        }
+        .rec-check:hover { border-color: var(--green); }
+        .rec-check.checked {
+            background: var(--green);
+            border-color: var(--green);
+            color: #fff;
+        }
+
+        .rec-body { flex: 1; min-width: 0; }
+        .rec-title { font-weight: 700; font-size: 0.92rem; }
+        .rec-detail { color: var(--muted); font-size: 0.82rem; margin-top: 2px; }
+        .rec-meta {
+            display: flex;
+            gap: 12px;
+            margin-top: 6px;
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+        .rec-meta .severity-critical { color: var(--red); font-weight: 700; }
+        .rec-meta .severity-warning { color: var(--orange); font-weight: 700; }
+        .rec-status-reopened { color: var(--red); font-weight: 700; }
+
+        .empty-state {
+            text-align: center;
+            padding: 48px 20px;
+            color: var(--muted);
+        }
+        .empty-state .icon { font-size: 2.5rem; margin-bottom: 12px; }
+
+        /* ── Detail modal ── */
+        .detail-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        .check-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .check-row:last-child { border-bottom: none; }
+        .check-icon { font-size: 1rem; flex-shrink: 0; }
+        .check-name { font-weight: 600; flex: 1; font-size: 0.88rem; }
+        .check-detail { color: var(--muted); font-size: 0.8rem; max-width: 400px; text-align: right; }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .charts-row { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            body { padding: 16px; }
+        }
+
+        /* ── Nav ── */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .nav-links { display: flex; gap: 16px; }
+        .nav-links a { color: var(--muted); text-decoration: none; font-size: 0.85rem; font-weight: 600; }
+        .nav-links a:hover { color: var(--text); }
+    </style>
+</head>
+<body>
+
+<div class="top-nav">
+    <div>
+        <h1>Eval Dashboard</h1>
+        <div class="subtitle">Автоматический анализ качества уроков</div>
+    </div>
+    <div class="nav-links">
+        <a href="/admin/logs?password={{ password }}">Logs</a>
+        <a href="/admin/stats?password={{ password }}">Stats</a>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value stat-accent">{{ stats.total_lessons }}</div>
+        <div class="stat-label">Уроков проверено</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value stat-green">{{ stats.avg_score }}</div>
+        <div class="stat-label">Средний скоринг</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value stat-red">{{ stats.total_critical }}</div>
+        <div class="stat-label">Критических ошибок</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value stat-green">{{ stats.perfect_lessons }}</div>
+        <div class="stat-label">Идеальных уроков</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value stat-orange">{{ stats.open_recommendations }}</div>
+        <div class="stat-label">Открытых рекомендаций</div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="charts-row">
+    <div class="chart-card">
+        <h3>Распределение оценок</h3>
+        <canvas id="scoreDistChart"></canvas>
+    </div>
+    <div class="chart-card">
+        <h3>Средняя оценка по дням</h3>
+        <canvas id="dailyChart"></canvas>
+    </div>
+</div>
+
+<!-- Common failures -->
+{% if stats.common_failures %}
+<div class="chart-card" style="margin-bottom: 32px;">
+    <h3>Самые частые ошибки</h3>
+    <canvas id="failuresChart"></canvas>
+</div>
+{% endif %}
+
+<!-- Tabs: Evaluations / Recommendations -->
+<div class="tabs">
+    <button class="tab active" onclick="showTab('evals', this)">
+        Проверки
+    </button>
+    <button class="tab" onclick="showTab('recs', this)">
+        Рекомендации
+        {% if stats.open_recommendations > 0 %}
+        <span class="badge">{{ stats.open_recommendations }}</span>
+        {% endif %}
+    </button>
+    <button class="tab" onclick="showTab('archived', this)">
+        Архив
+    </button>
+</div>
+
+<!-- Evaluations table -->
+<div id="tab-evals">
+    <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Время</th>
+                <th>Урок</th>
+                <th>Оценка</th>
+                <th>Проверки</th>
+                <th>Крит.</th>
+                <th>Детали</th>
+            </tr>
+            {% for ev in evaluations %}
+            <tr>
+                <td style="white-space:nowrap; color:var(--muted); font-size:0.82rem;">{{ ev.created_at[:16] }}</td>
+                <td><a class="link" href="/e/{{ ev.content_id }}" target="_blank">{{ ev.content_id }}</a></td>
+                <td>
+                    <span class="score-badge {% if ev.total_score >= 80 %}score-high{% elif ev.total_score >= 50 %}score-mid{% else %}score-low{% endif %}">
+                        {{ ev.total_score }}
+                    </span>
+                </td>
+                <td>
+                    <span style="color:var(--green)">{{ ev.passed }}</span>
+                    /
+                    <span style="color:{% if ev.failed > 0 %}var(--red){% else %}var(--muted){% endif %}">{{ ev.failed }}</span>
+                </td>
+                <td>
+                    {% if ev.critical_count > 0 %}
+                    <span class="crit-badge">{{ ev.critical_count }}</span>
+                    {% else %}
+                    <span style="color:var(--muted)">0</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a class="link" href="/admin/evals/{{ ev.content_id }}?password={{ password }}">
+                        подробнее
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+            {% if not evaluations %}
+            <tr><td colspan="6" class="empty-state">Нет данных</td></tr>
+            {% endif %}
+        </table>
+    </div>
+</div>
+
+<!-- Recommendations -->
+<div id="tab-recs" style="display:none">
+    {% if recommendations %}
+        {% for rec in recommendations %}
+        <div class="rec-card {{ rec.status }}" id="rec-{{ rec.id }}">
+            <button class="rec-check" onclick="toggleRec({{ rec.id }}, this)"
+                    title="Отметить как исправленное">✓</button>
+            <div class="rec-body">
+                <div class="rec-title">{{ check_names.get(rec.check_name, rec.check_name) }}</div>
+                <div class="rec-detail">{{ rec.description }}</div>
+                <div class="rec-meta">
+                    <span class="severity-{{ rec.severity }}">{{ rec.severity }}</span>
+                    <span>Урок: <a class="link" href="/e/{{ rec.content_id }}" target="_blank">{{ rec.content_id }}</a></span>
+                    <span>{{ rec.created_at[:16] }}</span>
+                    {% if rec.status == 'reopened' %}
+                    <span class="rec-status-reopened">ПОВТОР</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <div class="icon">✅</div>
+            <div>Нет открытых рекомендаций</div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Archived -->
+<div id="tab-archived" style="display:none">
+    {% if archived %}
+        {% for rec in archived %}
+        <div class="rec-card" style="opacity:0.6">
+            <button class="rec-check checked" disabled>✓</button>
+            <div class="rec-body">
+                <div class="rec-title">{{ check_names.get(rec.check_name, rec.check_name) }}</div>
+                <div class="rec-detail">{{ rec.description }}</div>
+                <div class="rec-meta">
+                    <span class="severity-{{ rec.severity }}">{{ rec.severity }}</span>
+                    <span>Урок: {{ rec.content_id }}</span>
+                    {% if rec.fixed_at %}
+                    <span>Исправлено: {{ rec.fixed_at[:16] }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <div class="icon">📦</div>
+            <div>Архив пуст</div>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+// ── Tabs ──
+function showTab(id, btn) {
+    document.querySelectorAll('[id^="tab-"]').forEach(function(el) { el.style.display = 'none'; });
+    document.getElementById('tab-' + id).style.display = '';
+    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+    btn.classList.add('active');
+}
+
+// ── Toggle recommendation ──
+function toggleRec(id, btn) {
+    fetch('/admin/evals/api/recommendation/' + id + '/toggle?password={{ password }}', { method: 'POST' })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.status === 'ok') {
+                var card = document.getElementById('rec-' + id);
+                card.style.opacity = '0.3';
+                card.style.transition = 'opacity 0.3s';
+                setTimeout(function() { card.remove(); }, 400);
+            }
+        });
+}
+
+// ── Charts ──
+var distData = {{ score_distribution_json }};
+new Chart(document.getElementById('scoreDistChart'), {
+    type: 'bar',
+    data: {
+        labels: Object.keys(distData),
+        datasets: [{
+            data: Object.values(distData),
+            backgroundColor: ['#f87171', '#fb923c', '#fbbf24', '#a3e635', '#34d399'],
+            borderRadius: 6,
+        }]
+    },
+    options: {
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, ticks: { color: '#71717a', stepSize: 1 }, grid: { color: '#2a2d3a' } },
+            x: { ticks: { color: '#71717a' }, grid: { display: false } }
+        }
+    }
+});
+
+var dailyData = {{ daily_scores_json }};
+if (dailyData.length > 0) {
+    new Chart(document.getElementById('dailyChart'), {
+        type: 'line',
+        data: {
+            labels: dailyData.map(function(d) { return d.day.slice(5); }),
+            datasets: [{
+                label: 'Средняя оценка',
+                data: dailyData.map(function(d) { return d.avg; }),
+                borderColor: '#818cf8',
+                backgroundColor: 'rgba(129, 140, 248, 0.1)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 4,
+                pointBackgroundColor: '#818cf8',
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { min: 0, max: 100, ticks: { color: '#71717a' }, grid: { color: '#2a2d3a' } },
+                x: { ticks: { color: '#71717a' }, grid: { display: false } }
+            }
+        }
+    });
+} else {
+    document.getElementById('dailyChart').parentElement.innerHTML += '<div class="empty-state">Нет данных за последние 30 дней</div>';
+}
+
+{% if stats.common_failures %}
+var failData = {{ common_failures_json }};
+new Chart(document.getElementById('failuresChart'), {
+    type: 'bar',
+    data: {
+        labels: failData.map(function(f) { return f.display || f.check; }),
+        datasets: [{
+            data: failData.map(function(f) { return f.count; }),
+            backgroundColor: '#f87171',
+            borderRadius: 6,
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { beginAtZero: true, ticks: { color: '#71717a', stepSize: 1 }, grid: { color: '#2a2d3a' } },
+            y: { ticks: { color: '#e4e4e7', font: { size: 11 } }, grid: { display: false } }
+        }
+    }
+});
+{% endif %}
+</script>
+
+</body>
+</html>

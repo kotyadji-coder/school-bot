@@ -402,6 +402,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-wrap: wrap;
+            gap: 6px;
         }
 
         .zone-label {
@@ -973,7 +975,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // ── 3. DRAG AND DROP ────────────────────────────────────────────────────
+    // ── 3. DRAG AND DROP (supports multiple items per zone) ─────────────────
     document.querySelectorAll('.task-drag_and_drop').forEach(function (card) {
         var wrapper   = card.querySelector('.dnd-wrapper');
         var correct   = JSON.parse(wrapper.dataset.correct);
@@ -981,23 +983,24 @@ document.addEventListener('DOMContentLoaded', function () {
         var draggedEl = null;
 
         function evaluateZone(zone) {
-            var slot = zone.querySelector('.zone-slot');
-            var item = slot.querySelector('.drag-item');
+            var slot  = zone.querySelector('.zone-slot');
+            var items = Array.from(slot.querySelectorAll('.drag-item'));
             zone.classList.remove('matched', 'wrong-match');
-            if (item) {
-                var ok = correct[item.dataset.item] === zone.dataset.zone;
-                zone.classList.add(ok ? 'matched' : 'wrong-match');
-            }
+            if (items.length === 0) return;
+            var allOk = items.every(function (item) {
+                return correct[item.dataset.item] === zone.dataset.zone;
+            });
+            zone.classList.add(allOk ? 'matched' : 'wrong-match');
         }
 
         function checkAllMatched() {
-            // Every single drag-item must be sitting inside a .matched zone.
-            // Items still in the pool, or in a wrong-match zone, will fail this check.
             var allItems = Array.from(wrapper.querySelectorAll('.drag-item'));
             if (allItems.length === 0) return;
+            var anyInPool = pool.querySelectorAll('.drag-item').length > 0;
+            if (anyInPool) return;
             var allPlacedCorrectly = allItems.every(function (item) {
                 var zone = item.closest('.drop-zone');
-                return zone && zone.classList.contains('matched');
+                return zone && correct[item.dataset.item] === zone.dataset.zone;
             });
             if (allPlacedCorrectly) onTaskSolved(card);
         }
@@ -1060,9 +1063,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 var fromZone = item.closest('.drop-zone');
 
                 if (zone) {
-                    var slot     = zone.querySelector('.zone-slot');
-                    var existing = slot.querySelector('.drag-item');
-                    if (existing && existing !== item) pool.appendChild(existing);
+                    var slot = zone.querySelector('.zone-slot');
                     if (fromZone && fromZone !== zone) fromZone.classList.remove('matched', 'wrong-match');
                     slot.appendChild(item);
                     evaluateZone(zone);
@@ -1114,10 +1115,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (!draggedEl) return;
 
                 var slot     = zone.querySelector('.zone-slot');
-                var existing = slot.querySelector('.drag-item');
                 var fromZone = draggedEl.closest('.drop-zone');
 
-                if (existing && existing !== draggedEl) pool.appendChild(existing);
                 if (fromZone && fromZone !== zone) fromZone.classList.remove('matched', 'wrong-match');
 
                 slot.appendChild(draggedEl);

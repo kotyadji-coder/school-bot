@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eval: {{ content_id }} — School Bot</title>
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #0f1117; --card: #1a1d27; --border: #2a2d3a;
+            --text: #e4e4e7; --muted: #71717a; --accent: #818cf8;
+            --green: #34d399; --red: #f87171; --orange: #fbbf24; --radius: 12px;
+        }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg); color: var(--text);
+            line-height: 1.6; padding: 24px; max-width: 800px; margin: 0 auto;
+        }
+        a { color: var(--accent); text-decoration: none; font-weight: 600; }
+        a:hover { text-decoration: underline; }
+        .back { margin-bottom: 20px; font-size: 0.88rem; }
+
+        .header-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 24px; margin-bottom: 24px;
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;
+        }
+        .header-title { font-size: 1.3rem; font-weight: 800; }
+        .header-score {
+            font-size: 2.5rem; font-weight: 900; line-height: 1;
+        }
+        .score-green { color: var(--green); }
+        .score-orange { color: var(--orange); }
+        .score-red { color: var(--red); }
+        .header-meta { color: var(--muted); font-size: 0.82rem; margin-top: 6px; }
+
+        .category-section { margin-bottom: 24px; }
+        .category-title {
+            font-size: 0.82rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.08em; color: var(--muted); margin-bottom: 10px; padding-left: 4px;
+        }
+        .checks-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius); overflow: hidden;
+        }
+        .check-row {
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .check-row:last-child { border-bottom: none; }
+        .check-icon { font-size: 1.1rem; flex-shrink: 0; line-height: 1.4; }
+        .check-info { flex: 1; min-width: 0; }
+        .check-name { font-weight: 700; font-size: 0.9rem; }
+        .check-detail { color: var(--muted); font-size: 0.8rem; margin-top: 2px; word-break: break-word; }
+        .check-severity {
+            flex-shrink: 0; font-size: 0.72rem; font-weight: 800;
+            padding: 2px 8px; border-radius: 6px; text-transform: uppercase;
+        }
+        .sev-critical { background: rgba(248,113,113,0.15); color: var(--red); }
+        .sev-warning { background: rgba(251,191,36,0.15); color: var(--orange); }
+        .sev-info { background: rgba(129,140,248,0.12); color: var(--accent); }
+
+        .lesson-link {
+            display: inline-block; margin-top: 16px;
+            padding: 10px 24px; background: var(--accent); color: #fff;
+            border-radius: 8px; font-weight: 700; font-size: 0.9rem;
+        }
+        .lesson-link:hover { opacity: 0.9; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+<div class="back"><a href="/admin/evals?password={{ password }}">← Назад к дашборду</a></div>
+
+<div class="header-card">
+    <div>
+        <div class="header-title">Урок {{ content_id }}</div>
+        <div class="header-meta">
+            {{ evaluation.created_at[:19] }} · {{ evaluation.passed }}/{{ evaluation.passed + evaluation.failed }} проверок пройдено
+            {% if evaluation.critical_count > 0 %}
+            · <span style="color:var(--red); font-weight:700">{{ evaluation.critical_count }} критических</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="header-score {% if evaluation.total_score >= 80 %}score-green{% elif evaluation.total_score >= 50 %}score-orange{% else %}score-red{% endif %}">
+        {{ evaluation.total_score }}
+    </div>
+</div>
+
+{% for cat_name, cat_label in [("structure", "Структура"), ("answers", "Правильность ответов"), ("content", "Качество контента"), ("distractors", "Дистракторы"), ("pedagogy", "Педагогика")] %}
+{% set cat_checks = checks | selectattr("category", "equalto", cat_name) | list %}
+{% if cat_checks %}
+<div class="category-section">
+    <div class="category-title">{{ cat_label }}</div>
+    <div class="checks-card">
+        {% for check in cat_checks %}
+        <div class="check-row">
+            <div class="check-icon">{{ "✅" if check.passed else "❌" }}</div>
+            <div class="check-info">
+                <div class="check-name">{{ check.display_name }}</div>
+                <div class="check-detail">{{ check.detail }}</div>
+            </div>
+            {% if not check.passed %}
+            <div class="check-severity sev-{{ check.severity }}">{{ check.severity }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+
+<a class="lesson-link" href="/e/{{ content_id }}" target="_blank">Открыть урок →</a>
+
+</body>
+</html>
