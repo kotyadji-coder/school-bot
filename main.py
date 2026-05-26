@@ -262,6 +262,14 @@ async def generate(request: Request):
     return {"status": "ok"}
 
 
+@app.get("/privacy", response_class=HTMLResponse)
+async def privacy():
+    html_path = Path(__file__).parent / "templates" / "privacy.html"
+    if not html_path.exists():
+        html_path = Path(__file__).parent / "new_templates" / "privacy.html"
+    return html_path.read_text(encoding="utf-8")
+
+
 @app.get("/e/{content_id}", response_class=HTMLResponse)
 async def get_lesson(content_id: str):
     # For print pages, re-render from template if context JSON exists
