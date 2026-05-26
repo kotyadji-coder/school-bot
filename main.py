@@ -3,6 +3,8 @@ import json
 import logging
 import os
 import re
+import time
+from collections import defaultdict
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -101,6 +103,16 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+_rate_limits: dict[str, list[float]] = defaultdict(list)
+
+def _check_rate_limit(key: str, max_requests: int = 10, window: int = 60) -> bool:
+    now = time.time()
+    _rate_limits[key] = [t for t in _rate_limits[key] if now - t < window]
+    if len(_rate_limits[key]) >= max_requests:
+        return False
+    _rate_limits[key].append(now)
+    return True
 
 app.mount("/content", StaticFiles(directory=str(CONTENT_DIR)), name="content")
 app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "static")), name="static")
@@ -235,6 +247,9 @@ async def generate(request: Request):
     )
     data = json.loads(body_str)
     req = GenerateRequest(**data)
+    client_ip = request.client.host if request.client else "unknown"
+    if not _check_rate_limit(client_ip, max_requests=10, window=60):
+        raise HTTPException(status_code=429, detail="Too many requests")
     db_logger.log(
         "INFO",
         "REQUEST",
