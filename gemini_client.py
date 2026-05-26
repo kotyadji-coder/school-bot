@@ -51,9 +51,8 @@ CHILD_SAFETY_SETTINGS = [
 
 # Fallback chain: AI Studio Pro → AI Studio Flash → Vertex AI Pro
 FALLBACK_CHAIN = [
-    ("ai_studio", "gemini-2.5-pro"),
-    ("ai_studio", "gemini-2.5-flash"),
-    ("vertex", "gemini-2.5-pro"),
+    ("ai_studio", "gemini-3.5-flash"),
+    ("vertex", "gemini-3.5-flash"),
 ]
 
 
@@ -159,6 +158,7 @@ def generate_explanation(question: str) -> tuple[str, dict]:
     """
     safety_config = types.GenerateContentConfig(
         safety_settings=CHILD_SAFETY_SETTINGS,
+        thinking_config=types.ThinkingConfig(thinking_level="MINIMAL"),
     )
 
     # Step 1: methodologist (plain text)
@@ -174,6 +174,7 @@ def generate_explanation(question: str) -> tuple[str, dict]:
     json_config = types.GenerateContentConfig(
         response_mime_type="application/json",
         safety_settings=CHILD_SAFETY_SETTINGS,
+        thinking_config=types.ThinkingConfig(thinking_level="MINIMAL"),
     )
     step2_response = _call_with_fallback(step2_prompt, config=json_config)
     lesson_dict = _extract_json(step2_response.text)
@@ -185,6 +186,7 @@ def generate_image_prompt(explanation: str) -> str:
     """Generates image prompt based on lesson text."""
     safety_config = types.GenerateContentConfig(
         safety_settings=CHILD_SAFETY_SETTINGS,
+        thinking_config=types.ThinkingConfig(thinking_level="MINIMAL"),
     )
     prompt = GENERATE_IMAGE_PROMPT_PROMPT.format(story=explanation)
     response = _call_with_fallback(prompt, config=safety_config)
@@ -195,6 +197,7 @@ def generate_image_prompt_fallback(explanation: str) -> str:
     """Fallback image prompt (kids cosplay strategy) for IMAGE_PROHIBITED_CONTENT."""
     safety_config = types.GenerateContentConfig(
         safety_settings=CHILD_SAFETY_SETTINGS,
+        thinking_config=types.ThinkingConfig(thinking_level="MINIMAL"),
     )
     prompt = GENERATE_IMAGE_PROMPT_FALLBACK_PROMPT.format(story=explanation)
     response = _call_with_fallback(prompt, config=safety_config)
