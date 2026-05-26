@@ -8,7 +8,7 @@ CONTENT_DIR = Path(__file__).parent / "content"
 CONTENT_DIR.mkdir(exist_ok=True)
 
 _TEMPLATES_DIR = Path(__file__).parent / "new_templates"
-_jinja_env = Environment(loader=FileSystemLoader(str(_TEMPLATES_DIR)))
+_jinja_env = Environment(loader=FileSystemLoader(str(_TEMPLATES_DIR)), autoescape=True)
 _jinja_env.filters["tojson"] = json.dumps
 
 

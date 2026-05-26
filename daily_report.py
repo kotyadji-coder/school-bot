@@ -131,9 +131,8 @@ def send_report():
                 f" — {w['total_score']}/100 ({w['critical_count']} крит.)"
             )
 
-    if ADMIN_PASSWORD:
-        lines.append("")
-        lines.append(f"📊 <a href=\"{SERVER_URL}/admin/evals?password={ADMIN_PASSWORD}\">Открыть дашборд</a>")
+    lines.append("")
+    lines.append(f"📊 <a href=\"{SERVER_URL}/admin/evals\">Открыть дашборд</a>")
 
     text = "\n".join(lines)
 
